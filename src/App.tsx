@@ -18,7 +18,7 @@ function App() {
   }, [hydrateFromApi])
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <ToastProvider>
         <AppShell>
           <Routes>
@@ -34,4 +34,5 @@ function App() {
   )
 }
 export default App
+
 
