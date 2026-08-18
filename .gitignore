@@ -30,3 +30,7 @@ gas-remote-review/
 functions/
 wrangler.toml
 qa-dashboard.png
+bundle-public.js
+qa-branding*.png
+qa-branding-local-dom.*
+.preview.pid

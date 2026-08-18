@@ -1,3 +1,4 @@
+import logoHorizontal from '../assets/brand/logo-horizontal.webp'
 import { useAppStore } from '../store/appStore'
 import { calculateInventory } from '../lib/utils'
 import { Card, SectionHeader, StatusBadge } from '../components/ui'
@@ -14,7 +15,7 @@ export default function DashboardPage() {
   const monthlyOutbound = outbound.length
   return (
     <div>
-      <SectionHeader title="Overview Operasional" description="Pantauan stok dan performa gudang Consignment Jambi/Mendalo hari ini." action={<img src={`${import.meta.env.BASE_URL}brand/logo-horizontal.webp`} alt="SOH Consignment" className="hidden h-12 w-auto rounded-xl bg-white/70 px-2 py-1 object-contain shadow-sm dark:bg-slate-900/70 sm:block" />} />
+      <SectionHeader title="Overview Operasional" description="Pantauan stok dan performa gudang Consignment Jambi/Mendalo hari ini." action={<img src={logoHorizontal} alt="SOH Consignment" className="hidden h-12 w-auto rounded-xl bg-white/70 px-2 py-1 object-contain shadow-sm dark:bg-slate-900/70 sm:block" />} />
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="flex flex-col p-5"><div className="mb-2 flex items-center justify-between"><p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Target Readiness</p><TrendingUp size={16} className="text-emerald-500" /></div><div className="mt-auto flex items-end justify-between"><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{readinessPercent.toFixed(1)}%</p><StatusBadge status={readinessPercent >= 95 ? 'ready' : 'warning'}>{readinessCount} dari {totalParts} part siap</StatusBadge></div></Card>
         <Card className="flex flex-col p-5"><div className="mb-2 flex items-center justify-between"><p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Perlu Refill</p><AlertTriangle size={16} className="text-amber-500" /></div><div className="mt-auto flex items-end justify-between"><p className="text-3xl font-extrabold text-slate-900 dark:text-white">{needRefillCount}</p><p className="text-sm text-slate-500">Part di bawah min</p></div></Card>
@@ -40,4 +41,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-
