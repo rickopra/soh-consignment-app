@@ -1,0 +1,34 @@
+﻿id,partNumber,replacementPartNumber,description,location,warehouseType,minStock,maxStock,openingStock,openingStockDate,warehouseStock,active
+PART-001,204100343,,SP Zunlong T500\18\CL-4\SL 15W40\GB11122-2006,Jambi/Mendalo,Consignment,1,1,74,2026-03-30,0,True
+PART-002,1000400684,,Filter Bahan Bakar Diesel ASSY\PF-CO-01-01710,Jambi/Mendalo,Consignment,1,1,240,2026-03-30,0,True
+PART-003,1000401258,,Filter Pemisah Air-Bahan Bakar\PR120BD-20L0.85,Jambi/Mendalo,Consignment,1,1,176,2026-03-30,0,True
+PART-004,1010500455,,Filter Udara Dalam\A02-03680-2,Jambi/Mendalo,Consignment,1,1,135,2026-03-30,0,True
+PART-005,1010500456,,Filter Udara Luar\A02-03670,Jambi/Mendalo,Consignment,1,1,121,2026-03-30,0,True
+PART-006,1010601379,,Filter Pilot\П0-CO-02-02210(A),Jambi/Mendalo,Consignment,1,1,120,2026-03-30,0,True
+PART-007,1010601420,,Filter Bahan Bakar\ФР-CO-01-01480(1),Jambi/Mendalo,Consignment,1,1,242,2026-03-30,0,True
+PART-008,1010601499,,Filter Oli\PF-CO-01-03500\0.4,Jambi/Mendalo,Consignment,1,1,242,2026-03-30,0,True
+PART-009,1010601500,,Filter Bahan Bakar\ФР-CO-01-01700,Jambi/Mendalo,Consignment,1,1,242,2026-03-30,0,True
+PART-010,1010601800,,Filter Pengembalian Oli\PF-CO-02-05032,Jambi/Mendalo,Consignment,1,1,150,2026-03-30,0,True
+PART-011,1010601949,,Filter Hisap\ФE-080B3X,Jambi/Mendalo,Consignment,1,1,51,2026-03-30,0,True
+PART-012,1130101687,,Kompresor\KD04A005Z\Assembling,Jambi/Mendalo,Consignment,1,1,15,2026-03-30,0,True
+PART-013,1220001741,,Pin\8E6358-PLUS,Jambi/Mendalo,Consignment,1,1,150,2026-03-30,0,True
+PART-014,1220001776,,Snap Ring\8E6359-PLUS,Jambi/Mendalo,Consignment,1,1,150,2026-03-30,0,True
+PART-015,1999907967,,Gigi Bucket (Titik Bucket)\1U3352TL,Jambi/Mendalo,Consignment,1,1,150,2026-03-30,0,True
+PART-016,1010601426,,Fuel filter element\ NP0203010468,Jambi/Mendalo,Consignment,1,1,8,2026-03-30,0,True
+PART-017,1010601384,,Suction filter element\PO-CO-01-03100,Jambi/Mendalo,Consignment,1,1,2,2026-03-30,0,True
+PART-018,1000401047,,Fuel Water Cold Treasure Filter Cartridg,Jambi/Mendalo,Consignment,1,1,8,2026-03-30,0,True
+PART-019,1010601423,,Crude fuel filter element\NP0203020,Jambi/Mendalo,Consignment,1,1,8,2026-03-30,0,True
+PART-020,1010601421,,Air filter safety filter\A02-03700,Jambi/Mendalo,Consignment,1,1,2,2026-03-30,0,True
+PART-021,1010601951,,Oil filter element\module\EF-089X\1,Jambi/Mendalo,Consignment,1,1,2,2026-03-30,0,True
+PART-022,1010500473,,Empty filter element (outside)\A02-,Jambi/Mendalo,Consignment,1,1,4,2026-03-30,0,True
+PART-023,1010500474,,Empty filter element (inside)\A02-057,Jambi/Mendalo,Consignment,1,1,16,2026-03-30,0,True
+PART-024,1010601406,,Return oil filter element,Jambi/Mendalo,Consignment,1,1,4,2026-03-30,0,True
+PART-025,1010601863,,Oil return filter element\assembly\S,Jambi/Mendalo,Consignment,1,1,4,2026-03-30,0,True
+PART-026,1010601599,,Pilot filter element\component\SOMDX-,Jambi/Mendalo,Consignment,1,1,4,2026-03-30,0,True
+PART-027,1019811081,,Filter element\pagx\b040785\,Jambi/Mendalo,Consignment,1,1,2,2026-03-30,0,True
+PART-028,1010601284,,Respirator filter element\P040214,Jambi/Mendalo,Consignment,1,1,2,2026-03-30,0,True
+PART-029,1010601382,,Pilot filter element\PO-CO-02-02730,Jambi/Mendalo,Consignment,1,1,4,2026-03-30,0,True
+PART-030,1000301533,,Oil filter element\4989314\,Jambi/Mendalo,Consignment,1,1,16,2026-03-30,0,True
+PART-031,1010601422,,Air filter outer filter\A02-03690,Jambi/Mendalo,Consignment,1,1,4,2026-03-30,0,True
+PART-032,1000400928,,Diesel Filter\275000-1105140\0.3,Jambi/Mendalo,Consignment,1,1,4,2026-03-30,0,True
+PART-033,1009901453,,Oil Filter\186-1012240\,Jambi/Mendalo,Consignment,1,1,16,2026-03-30,0,True

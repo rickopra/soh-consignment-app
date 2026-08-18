@@ -1,0 +1,10 @@
+﻿id,requestDate,requester,partNumber,qtyRequest,qtySupply,warehouseType,documents.pr,documents.po,documents.so,documents.dn,documents.invoice,notes,createdBy,createdAt
+OUT-2026-0001,2026-03-30,Anto Ramli,1000400928,4,4,Consignment,,,,,,,Warehouse Man,2026-03-30T08:00:00.000Z
+OUT-2026-0002,2026-03-30,Anto Ramli,1009901453,4,4,Consignment,,,,,,,Warehouse Man,2026-03-30T08:00:00.000Z
+OUT-2026-0003,2026-03-30,Anto Ramli,1019811081,1,1,Consignment,,,,,,,Warehouse Man,2026-03-30T08:00:00.000Z
+OUT-2026-0004,2026-03-30,Anto Ramli,1010601406,1,1,Consignment,,,,,,,Warehouse Man,2026-03-30T08:00:00.000Z
+OUT-2026-0005,2026-03-30,Anto Ramli,1010601422,2,2,Consignment,,,,,,,Warehouse Man,2026-03-30T08:00:00.000Z
+OUT-2026-0006,2026-03-30,Anto Ramli,1010601421,2,2,Consignment,,,,,,,Warehouse Man,2026-03-30T08:00:00.000Z
+OUT-2026-0007,2026-03-30,Anto Ramli,1010601384,1,1,Consignment,,,,,,,Warehouse Man,2026-03-30T08:00:00.000Z
+OUT-2026-0008,2026-03-30,Anto Ramli,1010601382,2,2,Consignment,,,,,,,Warehouse Man,2026-03-30T08:00:00.000Z
+OUT-2026-0009,2026-03-31,Ariq,204100343,8,8,Consignment,,,,,,,Warehouse Man,2026-03-31T08:00:00.000Z
