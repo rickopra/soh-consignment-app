@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Local deployment credentials and generated artifacts
+.clasp.json
+.env.demo
+.env.production
+gas-remote-review/
+functions/
+wrangler.toml
+qa-dashboard.png
+media/

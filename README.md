@@ -1,48 +1,66 @@
 ﻿# SOH Command Center
 
-Akses kontrol stok Consignment berbasis React + Netlify + Google Apps Script + Google Sheets.
+Aplikasi monitoring stok Consignment berbasis React dengan Google Apps Script + Google Sheets sebagai database. Frontend memakai hosting statis dan proxy serverless sehingga URL GAS serta API secret tidak dikirim ke browser.
 
-## Status
+## Link demo
 
-- Frontend polished dengan responsive layout, dark mode, keyboard focus state, skip link, semantic tables, modal custom, toast, dan reduced-motion support.
-- Mode demo menggunakan data dari workbook `DAILY MONITORING SOH CONSIGMENT.xlsx` dan disimpan ke `localStorage`.
-- Mode production menggunakan Netlify Function sebagai proxy ke GAS. Browser tidak pernah memanggil URL GAS secara langsung.
+- GitHub Pages: https://rickopra.github.io/soh-consignment-app/
+- Demo memakai seed data Excel dan localStorage browser. Data demo tidak menjadi database bersama.
 
 ## Jalankan lokal
 
-```bash
+`ash
 npm install
 npm run dev
-```
+`
 
-Tanpa environment variable, aplikasi berjalan dalam mode demo lokal.
+Tanpa environment variable, aplikasi berjalan dalam mode demo.
 
 ## Validasi
 
-```bash
+`ash
 npm run build
 npm run build:demo
 npm run lint
-```
+npx tsc -p tsconfig.functions.json
+`
 
-## Deploy gratis dengan custom subdomain
+## Mode production
 
-1. Push folder `soh-consignment-app` ke repository GitHub.
-2. Buat akun Netlify menggunakan GitHub.
-3. Pilih `Add new project` > `Import an existing project` > GitHub.
-4. Build command: `npm run build`.
-5. Publish directory: `dist`.
-6. Netlify membaca `netlify.toml` dan otomatis memakai `netlify/functions/api.ts`.
-7. Tambahkan environment variables di Netlify:
-   - `GAS_WEB_APP_URL`
-   - `GAS_API_SECRET`
-8. Deploy ulang.
-9. Gunakan subdomain gratis seperti `soh-command-center.netlify.app`, atau tambahkan custom domain sendiri dari menu Domain management.
+Arsitektur production:
 
-Paket Netlify Free sudah cukup untuk prototype dan aplikasi internal dengan trafik rendah.
+`	ext
+Custom domain atau subdomain Netlify
+        -> Netlify Function /api/*
+        -> Google Apps Script Web App
+        -> Google Sheets
+`
 
-## Google Sheets dan GAS
+1. Deploy isi gas/Code.gs dan gas/appsscript.json ke project Apps Script.
+2. Jalankan setupDatabase() satu kali dari editor Apps Script. Fungsi ini membuat Google Sheet database jika belum ada, membuat tab operasional, membuat API_SECRET, dan menanam seed data awal.
+3. Deploy Apps Script sebagai Web app. Gunakan Execute as: Me; akses publik mengikuti kebijakan Google Workspace.
+4. Import repository ini ke Netlify dengan build command 
+pm run build dan publish directory dist.
+5. Tambahkan environment variables Netlify:
+   - GAS_WEB_APP_URL
+   - GAS_API_SECRET
+6. Redeploy setelah environment variables tersimpan.
 
-Ikuti `docs/google-sheets-schema.md`. Source Apps Script ada di `gas/Code.gs`.
+Netlify memberikan subdomain gratis *.netlify.app. Jika memiliki domain sendiri, domain tersebut dapat diarahkan ke Netlify. GitHub Pages tetap dipakai sebagai demo statis.
 
-Data operasional tidak disimpan di repository GitHub.
+## Data dan aturan
+
+- MASTER_PART: master part, MIN/MAX, lokasi, dan stok awal.
+- OUTBOUND: Qty Request, Qty Supply, requester, dan dokumen transaksi.
+- INBOUND: Qty Matdoc, Qty Actual, dan status GR.
+- STOCK_ADJUSTMENT: koreksi stock opname atau selisih fisik.
+- Inbound hanya menambah stok saat Done GR.
+- SOH Available menggunakan Qty Request untuk membaca kebutuhan readiness lebih awal.
+- Outstanding = max(0, Qty Request - Qty Supply).
+- Refill = max(0, MAX - SOH Available) saat stok di bawah MIN.
+
+Detail skema ada di docs/google-sheets-schema.md.
+
+## Keamanan
+
+Jangan commit API_SECRET, .clasp.json, atau file environment production. Browser hanya mengakses endpoint /api/*; secret disimpan di environment variable Netlify dan Script Properties Apps Script.

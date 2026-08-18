@@ -1,57 +1,54 @@
 ﻿# Google Sheets schema
 
-## 1. Buat database
+## Setup database
 
-Buat satu Google Sheet khusus aplikasi, idealnya di akun perusahaan atau Shared Drive.
+1. Buka project Apps Script yang akan dipakai sebagai backend.
+2. Salin isi gas/Code.gs dan konfigurasi gas/appsscript.json ke project tersebut.
+3. Jalankan setupDatabase() satu kali dari editor Apps Script.
+4. Simpan piSecret dari hasil fungsi ke tempat aman. Jangan commit secret ke GitHub.
+5. Deploy project sebagai Web app dengan Execute as: Me. Pilihan akses publik mengikuti kebijakan akun Google Workspace.
 
-Buka Extensions > Apps Script, salin isi `gas/Code.gs`, lalu jalankan `setupDatabase()` satu kali dari editor Apps Script.
+setupDatabase() akan:
 
-Buat Script Properties berikut:
+- memakai spreadsheet yang sudah ada jika SPREADSHEET_ID sudah tersedia;
+- membuat spreadsheet baru bernama SOH Command Center DB jika belum ada;
+- membuat Script Properties SPREADSHEET_ID dan API_SECRET;
+- membuat empat tab operasional;
+- mengisi seed awal 33 master part dan 9 transaksi outbound jika tab masih kosong.
 
-- `SPREADSHEET_ID`: otomatis diisi oleh `setupDatabase()`.
-- `API_SECRET`: buat secret acak yang hanya disimpan di Script Properties dan Cloudflare Pages secret.
-
-Contoh secret bisa dibuat dengan password manager. Jangan commit secret ke GitHub.
-
-## 2. Sheet yang dibuat
+## Sheet yang dibuat
 
 | Sheet | Kegunaan |
 | --- | --- |
-| `MASTER_PART` | Master part, lokasi, warehouse type, MIN/MAX, dan stok awal |
-| `OUTBOUND` | Request dan supply part keluar |
-| `INBOUND` | Qty Matdoc, Qty Actual, dan status GR |
-| `STOCK_ADJUSTMENT` | Koreksi setelah stock opname atau investigasi selisih |
+| MASTER_PART | Master part, lokasi, warehouse type, MIN/MAX, dan stok awal |
+| OUTBOUND | Request dan supply part keluar |
+| INBOUND | Qty Matdoc, Qty Actual, dan status GR |
+| STOCK_ADJUSTMENT | Koreksi setelah stock opname atau investigasi selisih |
 
-Header dibuat otomatis oleh `setupDatabase()`.
+## Netlify proxy
 
-## 3. Seed data
+Tambahkan environment variables berikut di Netlify:
 
-Import data awal dari:
+- GAS_WEB_APP_URL: URL deployment Apps Script yang berakhiran /exec.
+- GAS_API_SECRET: nilai API_SECRET dari Script Properties Apps Script.
 
-- `docs/seed/master_part_seed.csv`
-- `docs/seed/outbound_seed.csv`
+Netlify Function meneruskan request server-to-server. Browser tidak menerima URL GAS atau secret secara langsung.
 
-Untuk tahap pertama, semua seed menggunakan warehouse type `Consignment` dan site `Jambi/Mendalo` sesuai workbook existing.
+## Seed data
 
-## 4. Deploy Apps Script
+Seed data juga tersedia dalam bentuk CSV:
 
-1. Deploy > New deployment.
-2. Type: Web app.
-3. Execute as: Me.
-4. Who has access: sesuai kebijakan akun perusahaan. Untuk proxy server, endpoint perlu dapat dipanggil oleh Cloudflare Pages Function.
-5. Salin URL deployment ke secret Cloudflare `GAS_WEB_APP_URL`.
-6. Isi secret yang sama dengan Script Property `API_SECRET` ke Cloudflare `GAS_API_SECRET`.
+- docs/seed/master_part_seed.csv
+- docs/seed/outbound_seed.csv
 
-Pages Function menambahkan secret ke request server-to-server. Browser hanya memanggil `/api/*` dari custom domain aplikasi.
+## Aturan kalkulasi
 
-## 5. Aturan kalkulasi
+- Inbound Posted: hanya Qty Matdoc dengan status Done GR.
+- SOH Fisik: stok awal + Inbound Posted - Qty Supply + adjustment variance.
+- SOH Available: stok awal + Inbound Posted - Qty Request + adjustment variance.
+- Outstanding: max(0, Qty Request - Qty Supply).
+- READY: SOH Available >= MIN.
+- NOT READY: SOH Available < MIN.
+- Refill: max(0, MAX - SOH Available) jika status NOT READY.
 
-- `Inbound Posted`: hanya `Qty Matdoc` dengan status `Done GR`.
-- `SOH Fisik`: stok awal + Inbound Posted - Qty Supply + adjustment variance.
-- `SOH Available`: stok awal + Inbound Posted - Qty Request + adjustment variance.
-- `Outstanding`: `max(0, Qty Request - Qty Supply)`.
-- `READY`: SOH Available >= MIN.
-- `NOT READY`: SOH Available < MIN.
-- `Refill`: `max(0, MAX - SOH Available)` jika status `NOT READY`.
-
-SOH Fisik dan SOH Available sengaja dipisah karena user menjelaskan Qty Request mengurangi stok available sebelum Qty Supply selesai.
+SOH Fisik dan SOH Available dipisah karena Qty Request dapat mengurangi stok available sebelum Qty Supply selesai.
