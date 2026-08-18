@@ -1,10 +1,9 @@
 # SOH Consignment UI Direction
 
-Membaca ini sebagai portal akses enterprise untuk operator gudang dan administrator, dengan bahasa visual operasional yang tenang dan terukur, dial ENERGI 1 / RITME 2 / GERAK 1.
+Membaca ini sebagai portal akses enterprise untuk operator gudang dan administrator. Desain menjauhi pola card generik, gradient AI, dan ruang kosong berlebih.
 
-- IBM Plex Sans dipakai karena bentuknya terbaca pada tabel, angka stok, dan label form yang padat tanpa terasa seperti template dashboard generik.
-- Navy gelap menjadi struktur dan aksen oranye dari logo menjadi penanda tindakan penting, tanpa gradient atau glow dekoratif.
-- Login memakai masthead tipis dan dua area kerja yang seimbang, bukan hero marketing atau kartu floating besar.
-- Admin memakai tabel pengguna dan audit sebagai fokus utama; metrik hanya dipakai sebagai ringkasan keputusan.
-- Radius 6 sampai 12px membedakan field, panel, dan dialog tanpa membuat semua elemen berbentuk pil.
-- Gerak dibatasi pada focus, hover, loading, dan perpindahan state karena pekerjaan autentikasi membutuhkan ketenangan dan kepastian.
+- **Palette**: Biru navy kuat untuk sidebar dan aksen utama, slate abu-abu lembut untuk kanvas workspace, dan indikator oranye tegas sebagai state aktif.
+- **Typography**: IBM Plex Sans memastikan angka stok, label form, dan tabel data tetap padat namun sangat jelas dibaca.
+- **Layout**: Toolbar padat dengan pencarian inline menggantikan judul halaman yang memakan tempat.
+- **Aksesibilitas**: Kontras yang mematuhi standar AA, focus state tebal pada setiap elemen interaktif, dan dukungan multi-bahasa terpusat.
+- **Kepercayaan**: Form tidak menggunakan radius melengkung seperti pil, dan transisi UI memprioritaskan ketegasan dibanding animasi memantul.

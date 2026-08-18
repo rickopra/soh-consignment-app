@@ -72,6 +72,15 @@ Detail skema ada di `docs/google-sheets-schema.md`.
 ## Branding
 
 Source logo disimpan di `media/`. Jalankan `npm run assets:brand` setelah mengganti source untuk membuat favicon, logo UI, icon manifest, dan social card teroptimasi di `public/brand/`.
+
+## Bahasa dan UI
+
+- Antarmuka tersedia dalam Bahasa Indonesia dan English.
+- Pilihan bahasa disimpan pada local storage dengan key `soh-language`.
+- Seluruh tanggal dan angka mengikuti locale bahasa aktif.
+- Copy UI, pesan error API, status stok, dan autentikasi memakai katalog pada `src/i18n/`.
+- Arah visual dan aturan komponen dijelaskan di `docs/design-direction.md`.
+
 ## Keamanan
 
 Jangan commit `API_SECRET`, `.clasp.json`, file environment production, atau credential administrator sementara. Browser memakai bridge nonce atau endpoint proxy; API secret tetap di Script Properties Apps Script dan environment variable Netlify.

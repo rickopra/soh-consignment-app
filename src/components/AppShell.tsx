@@ -1,37 +1,23 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowDownToLine, ArrowUpFromLine, Boxes, ChevronDown, ClipboardCheck, KeyRound, LayoutDashboard, LogOut, Menu, Moon, PackageCheck, Sun, UserCog, X } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Boxes, ChevronDown, CircleCheck, KeyRound, LayoutDashboard, LogOut, Menu, Moon, PackageCheck, Sun, UserCog, X } from 'lucide-react'
 import { NavLink as RouterNavLink, useLocation } from 'react-router-dom'
 import brandMark from '../assets/brand/brand-mark-512.png'
+import { useLanguage } from '../i18n/useLanguage'
+import { localizedError } from '../lib/localizedError'
 import { cn } from '../lib/utils'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
+import { LanguageSwitcher } from './LanguageSwitcher'
 import { useToast } from './toast'
 import { Button, IconButton, Modal, PasswordField, StatusBadge } from './ui'
 
-const baseNavItems = [
-  { to: '/', label: 'Overview', caption: 'Ringkasan operasional', icon: LayoutDashboard },
-  { to: '/inventory', label: 'SOH Inventory', caption: 'Stok dan readiness', icon: Boxes },
-  { to: '/outbound', label: 'Outbound', caption: 'Permintaan barang', icon: ArrowUpFromLine },
-  { to: '/inbound', label: 'Inbound', caption: 'Penerimaan barang', icon: ArrowDownToLine },
-  { to: '/refill', label: 'Refill & Voucher', caption: 'Output dan dokumen', icon: PackageCheck },
-]
-
-const pageMeta: Record<string, { title: string; subtitle: string }> = {
-  '/': { title: 'Overview', subtitle: 'Kondisi stok dan aktivitas hari ini' },
-  '/inventory': { title: 'SOH Inventory', subtitle: 'Pantau stok, readiness, dan kebutuhan refill' },
-  '/outbound': { title: 'Outbound', subtitle: 'Kelola permintaan dan pengeluaran part' },
-  '/inbound': { title: 'Inbound', subtitle: 'Catat penerimaan dan status GR' },
-  '/refill': { title: 'Refill & Voucher', subtitle: 'Siapkan rekomendasi refill dan dokumen permintaan' },
-  '/admin': { title: 'Kontrol Akses', subtitle: 'Kelola pengguna, sesi, dan audit autentikasi' },
-}
-
 function initials(value: string) {
-  const result = value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('')
-  return result || 'US'
+  return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'US'
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation()
+  const { language, t } = useLanguage()
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
   const changePassword = useAuthStore((state) => state.changePassword)
@@ -45,8 +31,24 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [passwordBusy, setPasswordBusy] = useState(false)
   const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'))
   const accountRef = useRef<HTMLDivElement>(null)
-  const meta = pageMeta[location.pathname] ?? pageMeta['/']
-  const navItems = user?.role === 'ADMIN' ? [...baseNavItems, { to: '/admin', label: 'Administrasi', caption: 'Pengguna dan akses', icon: UserCog }] : baseNavItems
+
+  const navItems = [
+    { to: '/', label: t('nav.overview'), caption: t('nav.overviewCaption'), icon: LayoutDashboard },
+    { to: '/inventory', label: t('nav.inventory'), caption: t('nav.inventoryCaption'), icon: Boxes },
+    { to: '/outbound', label: t('nav.outbound'), caption: t('nav.outboundCaption'), icon: ArrowUpFromLine },
+    { to: '/inbound', label: t('nav.inbound'), caption: t('nav.inboundCaption'), icon: ArrowDownToLine },
+    { to: '/refill', label: t('nav.refill'), caption: t('nav.refillCaption'), icon: PackageCheck },
+    ...(user?.role === 'ADMIN' ? [{ to: '/admin', label: t('nav.admin'), caption: t('nav.adminCaption'), icon: UserCog }] : []),
+  ]
+  const pageMeta = {
+    '/': { title: t('page.overviewTitle'), subtitle: t('page.overviewSubtitle') },
+    '/inventory': { title: t('page.inventoryTitle'), subtitle: t('page.inventorySubtitle') },
+    '/outbound': { title: t('page.outboundTitle'), subtitle: t('page.outboundSubtitle') },
+    '/inbound': { title: t('page.inboundTitle'), subtitle: t('page.inboundSubtitle') },
+    '/refill': { title: t('page.refillTitle'), subtitle: t('page.refillSubtitle') },
+    '/admin': { title: t('page.adminTitle'), subtitle: t('page.adminSubtitle') },
+  }
+  const meta = pageMeta[location.pathname as keyof typeof pageMeta] ?? pageMeta['/']
 
   useEffect(() => {
     if (!accountOpen) return
@@ -60,94 +62,92 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', close) }
   }, [accountOpen])
 
-  const toggleTheme = () => {
-    setDark((current) => {
-      const next = !current
-      document.documentElement.classList.toggle('dark', next)
-      window.localStorage.setItem('soh-theme', next ? 'dark' : 'light')
-      return next
-    })
-  }
+  useEffect(() => {
+    if (!mobileOpen) return
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setMobileOpen(false) }
+    document.addEventListener('keydown', close)
+    return () => document.removeEventListener('keydown', close)
+  }, [mobileOpen])
 
-  const signOut = async () => {
-    setAccountOpen(false)
-    clearData()
-    await logout()
-  }
+  const toggleTheme = () => setDark((current) => {
+    const next = !current
+    document.documentElement.classList.toggle('dark', next)
+    window.localStorage.setItem('soh-theme', next ? 'dark' : 'light')
+    return next
+  })
+
+  const signOut = async () => { setAccountOpen(false); clearData(); await logout() }
 
   const submitPassword = async () => {
     setPasswordError('')
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError('Konfirmasi password tidak sama.')
-      return
-    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) { setPasswordError(t('shell.passwordMismatch')); return }
     setPasswordBusy(true)
     try {
       await changePassword(passwordForm)
       setPasswordOpen(false)
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
-      push({ tone: 'success', title: 'Password diperbarui', description: 'Sesi aktif telah diperbarui.' })
+      push({ tone: 'success', title: t('shell.passwordUpdated'), description: t('shell.sessionUpdated') })
     } catch (error) {
-      setPasswordError(error instanceof Error ? error.message : 'Password gagal diperbarui.')
+      setPasswordError(localizedError(error, language, t, 'shell.passwordUpdateFailed'))
     } finally {
       setPasswordBusy(false)
     }
   }
 
   const sidebar = (
-    <aside className="flex h-full w-[288px] flex-col border-r border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-950" aria-label="Navigasi utama">
-      <div className="flex h-[76px] items-center gap-3 border-b border-slate-100 px-6 dark:border-slate-800">
-        <img src={brandMark} alt="SOH Consignment" className="h-10 w-10 rounded-xl object-cover ring-1 ring-slate-900/5 dark:ring-white/10" />
-        <div><p className="text-[15px] font-semibold tracking-tight text-slate-950 dark:text-white">SOH Consignment</p><p className="text-[11px] font-medium text-slate-400">Consignment control center</p></div>
-        <div className="ml-auto lg:hidden"><IconButton label="Tutup navigasi" onClick={() => setMobileOpen(false)}><X size={18} /></IconButton></div>
+    <aside className='flex h-full w-[268px] flex-col bg-[var(--sidebar)] text-white' aria-label={t('shell.primaryNavigation')}>
+      <div className='flex h-[76px] items-center gap-3 border-b border-white/10 px-5'>
+        <span className='flex h-10 w-10 items-center justify-center bg-white'><img src={brandMark} alt='' className='h-9 w-9 object-cover' aria-hidden='true' /></span>
+        <div className='min-w-0'><p className='truncate text-[15px] font-semibold tracking-tight'>SOH Consignment</p><p className='mt-0.5 truncate text-[10px] font-medium uppercase tracking-[0.08em] text-[#93adbd]'>{t('shell.productCaption')}</p></div>
+        <div className='ml-auto lg:hidden'><IconButton label={t('shell.closeNavigation')} className='text-slate-200 hover:border-white/20 hover:bg-white/10 hover:text-white' onClick={() => setMobileOpen(false)}><X size={18} /></IconButton></div>
       </div>
-      <div className="px-4 pt-6">
-        <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Workspace</p>
-        <nav className="space-y-1">
+
+      <div className='px-3 pt-6'>
+        <p className='mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#7896a8]'>{t('nav.workspace')}</p>
+        <nav className='space-y-1'>
           {navItems.map(({ to, label, caption, icon: Icon }) => (
-            <RouterNavLink key={to} to={to} end={to === '/'} onClick={() => setMobileOpen(false)} className={({ isActive }) => cn('group flex items-center gap-3 rounded-xl px-3 py-3 transition-colors', isActive ? 'bg-blue-50 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white')}>
-              {({ isActive }) => <><span className={cn('flex h-9 w-9 items-center justify-center rounded-lg transition-colors', isActive ? 'bg-[#0b4a78] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400')}><Icon size={17} aria-hidden="true" /></span><span className="min-w-0"><span className="block text-sm font-semibold">{label}</span><span className={cn('mt-0.5 block truncate text-[11px]', isActive ? 'text-blue-700 dark:text-blue-200' : 'text-slate-600 dark:text-slate-400')}>{caption}</span></span></>}
+            <RouterNavLink key={to} to={to} end={to === '/'} onClick={() => setMobileOpen(false)} className={({ isActive }) => cn('group relative grid min-h-[54px] grid-cols-[34px_1fr] items-center gap-3 border border-transparent px-3 py-2.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]', isActive ? 'border-white/10 bg-[var(--sidebar-raised)] text-white before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[var(--brand-orange-bright)]' : 'text-[#b8c9d2] hover:bg-white/[0.06] hover:text-white')}>
+              <Icon size={18} className='justify-self-center' aria-hidden='true' />
+              <span className='min-w-0'><span className='block truncate text-sm font-semibold'>{label}</span><span className='mt-0.5 block truncate text-[10px] text-[#8fa9b8]'>{caption}</span></span>
             </RouterNavLink>
           ))}
         </nav>
       </div>
-      <div className="mt-auto px-4 pb-5">
-        <div className="border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-3 flex items-center justify-between"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#0b4a78] ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700"><ClipboardCheck size={16} aria-hidden="true" /></span><StatusBadge status="ready">Connected</StatusBadge></div>
-          <p className="text-xs font-semibold text-slate-900 dark:text-white">Jambi / Mendalo</p>
-          <p className="mt-1 text-[11px] leading-5 text-slate-500 dark:text-slate-400">Data operasional terhubung ke Google Sheets.</p>
+
+      <div className='mt-auto border-t border-white/10 px-5 py-5'>
+        <div className='flex items-start gap-3'>
+          <CircleCheck size={18} className='mt-0.5 shrink-0 text-[#73c5a4]' aria-hidden='true' />
+          <div className='min-w-0'><div className='flex items-center gap-2'><p className='text-xs font-semibold'>{t('shell.connectionTitle')}</p><StatusBadge status='ready'>{t('shell.connected')}</StatusBadge></div><p className='mt-1.5 text-[11px] leading-5 text-[#93adbd]'>{t('shell.connectionDescription')}</p></div>
         </div>
       </div>
     </aside>
   )
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-slate-950 focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-white">Lewati ke konten utama</a>
-      <div className="flex min-h-screen">
-        <div className="hidden lg:block">{sidebar}</div>
-        {mobileOpen && <div className="fixed inset-0 z-40 bg-slate-950/50 lg:hidden" onClick={() => setMobileOpen(false)} aria-hidden="true" />}
+    <div className='min-h-screen bg-[var(--canvas)] text-[var(--text)]'>
+      <a href='#main-content' className='sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:bg-[var(--sidebar)] focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-white'>{t('shell.skipToContent')}</a>
+      <div className='flex min-h-screen'>
+        <div className='hidden lg:block'>{sidebar}</div>
+        {mobileOpen && <div className='fixed inset-0 z-40 bg-[#07131d]/65 lg:hidden' onClick={() => setMobileOpen(false)} aria-hidden='true' />}
         <div className={cn('fixed inset-y-0 left-0 z-50 transition-transform duration-200 lg:hidden', mobileOpen ? 'translate-x-0' : '-translate-x-full')}>{sidebar}</div>
-        <div className="min-w-0 flex-1">
-          <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between gap-4 border-b border-slate-200/80 bg-white/95 px-4 dark:border-slate-800 dark:bg-slate-950/95 sm:px-6 xl:px-9" aria-label="Header halaman">
-            <div className="flex min-w-0 items-center gap-3"><div className="lg:hidden"><IconButton label="Buka navigasi" onClick={() => setMobileOpen(true)}><Menu size={19} /></IconButton></div><div className="min-w-0"><h2 className="truncate text-base font-semibold tracking-tight text-slate-950 dark:text-white">{meta.title}</h2><p className="hidden truncate text-xs text-slate-400 sm:block">{meta.subtitle}</p></div></div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <IconButton label={dark ? 'Aktifkan mode terang' : 'Aktifkan mode gelap'} onClick={toggleTheme}>{dark ? <Sun size={17} /> : <Moon size={17} />}</IconButton>
-              <div className="hidden h-8 w-px bg-slate-200 dark:bg-slate-800 sm:block" aria-hidden="true" />
-              <div className="relative" ref={accountRef}>
-                <button type="button" onClick={() => setAccountOpen((current) => !current)} className="flex min-h-11 items-center gap-2 rounded-lg px-1.5 text-left transition-colors hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0b4a78] dark:hover:bg-slate-900" aria-haspopup="menu" aria-expanded={accountOpen}>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-md bg-[#0b4a78] text-xs font-semibold text-white">{initials(user?.displayName ?? '')}</span><span className="hidden sm:block"><span className="block max-w-36 truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{user?.displayName}</span><span className="block text-[10px] text-slate-400">{user?.role === 'ADMIN' ? 'Administrator' : 'Operator'}</span></span><ChevronDown size={15} className="hidden text-slate-400 sm:block" aria-hidden="true" />
+        <div className='min-w-0 flex-1'>
+          <header className='sticky top-0 z-30 flex min-h-[76px] items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--surface)] px-4 sm:px-6 xl:px-9' aria-label={t('shell.applicationHeader')}>
+            <div className='flex min-w-0 items-center gap-3'><div className='lg:hidden'><IconButton label={t('shell.openNavigation')} onClick={() => setMobileOpen(true)}><Menu size={19} /></IconButton></div><div className='min-w-0'><p className='text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-orange)]'>{meta.title}</p><h2 className='truncate text-base font-semibold tracking-tight text-[var(--text)]'>{meta.subtitle}</h2></div></div>
+            <div className='flex items-center gap-2 sm:gap-3'><LanguageSwitcher compact /><IconButton label={dark ? t('shell.lightMode') : t('shell.darkMode')} onClick={toggleTheme}>{dark ? <Sun size={17} /> : <Moon size={17} />}</IconButton><div className='hidden h-7 w-px bg-[var(--border)] sm:block' aria-hidden='true' />
+              <div className='relative' ref={accountRef}>
+                <button type='button' onClick={() => setAccountOpen((current) => !current)} className='flex min-h-11 items-center gap-2 px-1.5 text-left transition-colors hover:bg-[var(--surface-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)]' aria-haspopup='menu' aria-expanded={accountOpen} aria-label={t('shell.accountMenu')}>
+                  <span className='flex h-9 w-9 items-center justify-center bg-[var(--brand-blue)] text-xs font-semibold text-white'>{initials(user?.displayName ?? '')}</span><span className='hidden sm:block'><span className='block max-w-36 truncate text-xs font-semibold text-[var(--text)]'>{user?.displayName}</span><span className='block text-[10px] text-[var(--text-muted)]'>{user?.role === 'ADMIN' ? t('common.administrator') : t('common.operator')}</span></span><ChevronDown size={15} className='hidden text-[var(--text-muted)] sm:block' aria-hidden='true' />
                 </button>
-                {accountOpen && <div role="menu" className="absolute right-0 top-[calc(100%+8px)] w-56 border border-slate-200 bg-white p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-900"><div className="border-b border-slate-100 px-3 py-2.5 dark:border-slate-800"><p className="truncate text-xs font-semibold text-slate-900 dark:text-white">{user?.username}</p><p className="mt-0.5 truncate text-[11px] text-slate-500">{user?.email || 'Email belum diisi'}</p></div><button role="menuitem" type="button" onClick={() => { setAccountOpen(false); setPasswordOpen(true) }} className="mt-1 flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-sm text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0b4a78] dark:text-slate-200 dark:hover:bg-slate-800"><KeyRound size={16} aria-hidden="true" />Ganti password</button><button role="menuitem" type="button" onClick={() => void signOut()} className="flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-sm text-rose-700 hover:bg-rose-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 dark:text-rose-300 dark:hover:bg-rose-950/40"><LogOut size={16} aria-hidden="true" />Keluar</button></div>}
+                {accountOpen && <div role='menu' className='absolute right-0 top-[calc(100%+8px)] z-40 w-60 border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-xl'><div className='border-b border-[var(--border)] px-3 py-2.5'><p className='truncate text-xs font-semibold text-[var(--text)]'>{user?.username}</p><p className='mt-0.5 truncate text-[11px] text-[var(--text-muted)]'>{user?.email || t('shell.emailMissing')}</p></div><button role='menuitem' type='button' onClick={() => { setAccountOpen(false); setPasswordOpen(true) }} className='mt-1 flex min-h-10 w-full items-center gap-2 px-3 text-sm text-[var(--text)] hover:bg-[var(--surface-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]'><KeyRound size={16} aria-hidden='true' />{t('shell.changePassword')}</button><button role='menuitem' type='button' onClick={() => void signOut()} className='flex min-h-10 w-full items-center gap-2 px-3 text-sm text-[#a33945] hover:bg-[#f8e9eb] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a33945]'><LogOut size={16} aria-hidden='true' />{t('common.signOut')}</button></div>}
               </div>
             </div>
           </header>
-          <main id="main-content" className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8 xl:px-9">{children}</main>
+          <main id='main-content' className='mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8 xl:px-9'>{children}</main>
         </div>
       </div>
 
-      <Modal open={passwordOpen} onClose={() => setPasswordOpen(false)} title="Ganti password" description="Sesi lama akan dicabut setelah password berhasil diperbarui." size="sm">
-        <div className="space-y-4"><PasswordField id="current-password" label="Password saat ini" value={passwordForm.currentPassword} onChange={(value) => setPasswordForm((current) => ({ ...current, currentPassword: value }))} autoComplete="current-password" required disabled={passwordBusy} /><PasswordField id="profile-new-password" label="Password baru" value={passwordForm.newPassword} onChange={(value) => setPasswordForm((current) => ({ ...current, newPassword: value }))} autoComplete="new-password" required disabled={passwordBusy} hint="Minimal 12 karakter, huruf besar, kecil, angka, dan simbol" /><PasswordField id="profile-confirm-password" label="Ulangi password baru" value={passwordForm.confirmPassword} onChange={(value) => setPasswordForm((current) => ({ ...current, confirmPassword: value }))} autoComplete="new-password" required disabled={passwordBusy} />{passwordError && <p role="alert" className="border-l-4 border-rose-600 bg-rose-50 px-4 py-3 text-sm text-rose-800">{passwordError}</p>}<div className="flex justify-end gap-2 border-t border-slate-200 pt-4"><Button variant="secondary" onClick={() => setPasswordOpen(false)} disabled={passwordBusy}>Batal</Button><Button onClick={() => void submitPassword()} disabled={passwordBusy || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}>{passwordBusy ? 'Menyimpan...' : 'Simpan password'}</Button></div></div>
+      <Modal open={passwordOpen} onClose={() => setPasswordOpen(false)} title={t('shell.changePassword')} description={t('shell.changePasswordDescription')} size='sm'>
+        <div className='space-y-4'><PasswordField id='current-password' label={t('common.currentPassword')} value={passwordForm.currentPassword} onChange={(value) => setPasswordForm((current) => ({ ...current, currentPassword: value }))} autoComplete='current-password' required disabled={passwordBusy} /><PasswordField id='profile-new-password' label={t('common.newPassword')} value={passwordForm.newPassword} onChange={(value) => setPasswordForm((current) => ({ ...current, newPassword: value }))} autoComplete='new-password' required disabled={passwordBusy} hint={t('shell.passwordHint')} /><PasswordField id='profile-confirm-password' label={t('common.confirmPassword')} value={passwordForm.confirmPassword} onChange={(value) => setPasswordForm((current) => ({ ...current, confirmPassword: value }))} autoComplete='new-password' required disabled={passwordBusy} />{passwordError && <p role='alert' className='border-l-4 border-[#a33945] bg-[#f8e9eb] px-4 py-3 text-sm text-[#7f2834]'>{passwordError}</p>}<div className='flex justify-end gap-2 border-t border-[var(--border)] pt-4'><Button variant='secondary' onClick={() => setPasswordOpen(false)} disabled={passwordBusy}>{t('common.cancel')}</Button><Button onClick={() => void submitPassword()} disabled={passwordBusy || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}>{passwordBusy ? t('common.saving') : t('shell.savePassword')}</Button></div></div>
       </Modal>
     </div>
   )

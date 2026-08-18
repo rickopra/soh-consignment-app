@@ -1,34 +1,55 @@
 import type { ReactNode } from 'react'
+import { Boxes, Database, MapPinned } from 'lucide-react'
 import brandMark from '../assets/brand/brand-mark-512.png'
 import logoHorizontal from '../assets/brand/logo-horizontal.webp'
+import { useLanguage } from '../i18n/useLanguage'
+import { LanguageSwitcher } from './LanguageSwitcher'
 
 export function AuthLayout({ children, contextTitle, contextDescription }: { children: ReactNode; contextTitle: string; contextDescription: string }) {
+  const { t } = useLanguage()
+  const contextItems = [
+    { icon: MapPinned, label: t('auth.locationLabel'), value: t('auth.locationValue') },
+    { icon: Boxes, label: t('auth.scopeLabel'), value: t('auth.scopeValue') },
+    { icon: Database, label: t('auth.dataLabel'), value: t('auth.dataValue') },
+  ]
+
   return (
-    <div className="auth-light min-h-screen bg-[#f3f5f7] text-slate-950">
-      <header className="flex h-16 items-center border-b border-slate-200 bg-white px-5 sm:px-8" aria-label="Identitas aplikasi">
-        <img src={logoHorizontal} alt="SOH Consignment" className="h-9 w-auto object-contain" />
-        <div className="ml-auto hidden items-center gap-2 text-xs font-medium text-slate-500 sm:flex">
-          <span className="h-2 w-2 rounded-full bg-emerald-600" aria-hidden="true" />
-          Sistem operasional internal
+    <div className='auth-surface min-h-screen bg-[var(--canvas)] text-[var(--text)]'>
+      <header className='flex h-[72px] items-center border-b border-[var(--border)] bg-[var(--surface)] px-5 sm:px-8' aria-label={t('auth.systemLabel')}>
+        <img src={logoHorizontal} alt={t('common.appName')} className='h-9 w-auto object-contain sm:h-10' />
+        <div className='ml-auto flex items-center gap-4'>
+          <span className='hidden items-center gap-2 text-xs font-medium text-[var(--text-muted)] md:flex'><span className='h-2 w-2 bg-[#237354]' aria-hidden='true' />{t('auth.systemLabel')}</span>
+          <LanguageSwitcher />
         </div>
       </header>
-      <main className="grid min-h-[calc(100vh-4rem)] lg:grid-cols-[minmax(360px,0.78fr)_minmax(560px,1.22fr)]">
-        <section className="relative order-2 overflow-hidden bg-[#0b1f33] px-6 py-10 text-white sm:px-10 lg:order-1 lg:flex lg:items-center lg:px-14" aria-labelledby="auth-context-title">
-          <div className="relative z-10 max-w-lg">
-            <img src={brandMark} alt="" className="mb-8 h-14 w-14 rounded-lg object-cover" aria-hidden="true" />
-            <div className="mb-5 h-1 w-12 bg-[#f28c28]" aria-hidden="true" />
-            <h1 id="auth-context-title" className="max-w-md text-3xl font-semibold leading-tight tracking-[-0.02em] sm:text-4xl">{contextTitle}</h1>
-            <p className="mt-4 max-w-md text-sm leading-7 text-slate-300 sm:text-base">{contextDescription}</p>
-            <dl className="mt-10 grid max-w-md grid-cols-[112px_1fr] gap-x-4 gap-y-4 border-t border-white/15 pt-6 text-sm">
-              <dt className="text-slate-400">Lokasi</dt><dd className="font-medium text-white">Jambi / Mendalo</dd>
-              <dt className="text-slate-400">Cakupan</dt><dd className="font-medium text-white">Inventory, inbound, outbound, dan refill</dd>
-              <dt className="text-slate-400">Data</dt><dd className="font-medium text-white">Google Sheets melalui Apps Script</dd>
-            </dl>
+
+      <main className='mx-auto grid min-h-[calc(100vh-72px)] max-w-[1480px] lg:grid-cols-[400px_minmax(0,1fr)]'>
+        <aside className='order-2 bg-[var(--sidebar)] px-6 py-8 text-white sm:px-10 lg:order-1 lg:flex lg:flex-col lg:justify-between lg:px-11 lg:py-12' aria-labelledby='auth-context-title'>
+          <div>
+            <div className='mb-9 flex items-center gap-3'>
+              <span className='flex h-11 w-11 items-center justify-center bg-white'><img src={brandMark} alt='' className='h-9 w-9 object-cover' aria-hidden='true' /></span>
+              <span className='h-px flex-1 bg-white/20' aria-hidden='true' />
+              <span className='h-2 w-2 bg-[var(--brand-orange-bright)]' aria-hidden='true' />
+            </div>
+            <p className='mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9eb8c8]'>{t('auth.systemLabel')}</p>
+            <h1 id='auth-context-title' className='max-w-sm text-[27px] font-semibold leading-[1.2] tracking-[-0.02em]'>{contextTitle}</h1>
+            <p className='mt-4 max-w-sm text-sm leading-6 text-[#c2d1da]'>{contextDescription}</p>
           </div>
-          <div className="absolute bottom-0 right-0 h-40 w-2 bg-[#f28c28]" aria-hidden="true" />
-        </section>
-        <section className="order-1 flex items-center justify-center px-5 py-10 sm:px-10 lg:order-2 lg:px-16">
-          <div className="w-full max-w-[430px]">{children}</div>
+
+          <dl className='mt-10 border-t border-white/15 lg:mt-16'>
+            {contextItems.map(({ icon: Icon, label, value }) => (
+              <div key={label} className='grid grid-cols-[28px_92px_1fr] gap-3 border-b border-white/10 py-4 text-xs'>
+                <Icon size={16} className='mt-0.5 text-[var(--brand-orange-bright)]' aria-hidden='true' />
+                <dt className='text-[#93adbd]'>{label}</dt>
+                <dd className='font-medium leading-5 text-white'>{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </aside>
+
+        <section className='relative order-1 flex items-center justify-center bg-[var(--surface)] px-5 py-10 sm:px-10 lg:order-2 lg:px-16' aria-label={t('auth.loginTitle')}>
+          <span className='absolute left-0 top-0 hidden h-full w-1 bg-[var(--brand-orange-bright)] lg:block' aria-hidden='true' />
+          <div className='w-full max-w-[440px]'>{children}</div>
         </section>
       </main>
     </div>

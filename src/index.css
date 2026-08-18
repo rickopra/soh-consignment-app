@@ -2,38 +2,93 @@
 
 :root {
   font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
-  color: #0f172a;
-  background: #f8fafc;
+  color: #172a36;
+  background: #e8edf0;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --brand-blue: #104b78;
+  --brand-blue-strong: #0b385a;
+  --brand-orange: #d86600;
+  --brand-orange-bright: #f58220;
+  --canvas: #e8edf0;
+  --surface: #fbfcfc;
+  --surface-raised: #ffffff;
+  --surface-muted: #f0f3f4;
+  --surface-strong: #e1e7ea;
+  --border: #ced8dd;
+  --border-strong: #aebdc5;
+  --text: #172a36;
+  --text-muted: #526875;
+  --text-subtle: #71838d;
+  --sidebar: #0a273d;
+  --sidebar-raised: #10354f;
+  --focus: #e67817;
+  --success: #237354;
+  --warning: #9b5a00;
+  --danger: #a33945;
 }
-html { min-width: 320px; background: #f8fafc; }
-html.dark { background: #020617; }
-body { margin: 0; min-width: 320px; min-height: 100vh; }
+html { min-width: 320px; background: var(--canvas); }
+html.dark {
+  color: #e8f0f3;
+  background: #07131d;
+  --brand-blue: #4d8fbd;
+  --brand-blue-strong: #78afd3;
+  --brand-orange: #ff9d42;
+  --brand-orange-bright: #ffad62;
+  --canvas: #07131d;
+  --surface: #0d1c28;
+  --surface-raised: #112331;
+  --surface-muted: #132735;
+  --surface-strong: #1c3444;
+  --border: #294251;
+  --border-strong: #3b5969;
+  --text: #edf3f5;
+  --text-muted: #afc0c8;
+  --text-subtle: #8da3ae;
+  --sidebar: #06121c;
+  --sidebar-raised: #0d2a3f;
+  --focus: #ffad62;
+  --success: #68b99b;
+  --warning: #e9ad55;
+  --danger: #ef8e98;
+}
+body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--canvas); color: var(--text); }
 button, input, select, textarea { font: inherit; }
-button, a, select, input { -webkit-tap-highlight-color: transparent; }
-::selection { background: #bfdbfe; color: #1e3a8a; }
+button, a, select, input, textarea { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled), select:not(:disabled) { cursor: pointer; }
+::selection { background: #f6c38f; color: #4a2500; }
+:focus-visible { outline-color: var(--focus); }
+.app-panel { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: 0 1px 2px rgb(9 39 61 / 0.05); }
+.app-panel-header { border-bottom: 1px solid var(--border); padding: 18px 20px; }
 
-.auth-light { color-scheme: light; }
-.dark .auth-light input,
-.dark .auth-light select,
-.dark .auth-light textarea { border-color: #cbd5e1; background-color: #fff; color: #0f172a; }
-.dark .auth-light input::placeholder,
-.dark .auth-light textarea::placeholder { color: #94a3b8; }
-.dark .auth-light input:focus,
-.dark .auth-light select:focus,
-.dark .auth-light textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 4px rgb(59 130 246 / 0.1); }
-.dark .auth-light label { color: #334155; }
+.auth-surface {
+  color-scheme: light;
+  --canvas: #e8edf0;
+  --surface: #f8faf9;
+  --surface-raised: #ffffff;
+  --surface-muted: #eef2f3;
+  --surface-strong: #dfe6e9;
+  --border: #cad5da;
+  --border-strong: #a9b8c0;
+  --text: #172a36;
+  --text-muted: #536875;
+  --text-subtle: #71838d;
+  --brand-blue: #104b78;
+  --brand-blue-strong: #0b385a;
+  --focus: #d86600;
+}
+.data-table { width: 100%; border-collapse: collapse; text-align: left; }
+.data-table thead { background: var(--surface-muted); color: var(--text-muted); }
+.data-table th { border-bottom: 1px solid var(--border); padding: 12px 16px; font-size: 11px; font-weight: 600; letter-spacing: 0.055em; text-transform: uppercase; white-space: nowrap; }
+.data-table td { border-bottom: 1px solid var(--border); padding: 14px 16px; font-size: 13px; vertical-align: top; }
+.data-table tbody tr:last-child td { border-bottom: 0; }
+.data-table tbody tr:hover { background: color-mix(in srgb, var(--surface-muted) 70%, transparent); }
 .dark .auth-light button[aria-label="Tampilkan password"],
 .dark .auth-light button[aria-label="Sembunyikan password"] { color: #64748b; }
 .dark .auth-light button[aria-label="Tampilkan password"]:hover,
 .dark .auth-light button[aria-label="Sembunyikan password"]:hover { color: #0f172a; }
-.dark .auth-light button { --tw-ring-offset-color: #fff; }
-.dark .auth-light .auth-light-secondary { color: #475569; }
-.dark .auth-light .auth-light-secondary:hover { background-color: #e2e8f0; color: #0f172a; }
-.dark .operational-view .text-slate-500 { color: #94a3b8; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }

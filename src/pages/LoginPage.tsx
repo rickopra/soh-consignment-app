@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from 'react'
-import { AlertCircle, LoaderCircle, LockKeyhole } from 'lucide-react'
+import { AlertCircle, ArrowRight, LoaderCircle, LockKeyhole } from 'lucide-react'
 import { AuthLayout } from '../components/AuthLayout'
 import { Button, FieldLabel, PasswordField, fieldBase } from '../components/ui'
-import { apiIsConfigured, ApiError } from '../lib/api'
+import { useLanguage } from '../i18n/useLanguage'
+import { apiIsConfigured } from '../lib/api'
+import { localizedError } from '../lib/localizedError'
 import { useAuthStore } from '../store/authStore'
 
 export default function LoginPage() {
+  const { language, t } = useLanguage()
   const login = useAuthStore((state) => state.login)
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -16,39 +19,36 @@ export default function LoginPage() {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setError('')
-    if (!configured) {
-      setError('Backend autentikasi belum dikonfigurasi.')
-      return
-    }
+    if (!configured) { setError(t('auth.backendNotConfigured')); return }
     setBusy(true)
     try {
       await login(identifier, password)
     } catch (requestError) {
-      setError(requestError instanceof ApiError ? requestError.message : 'Login gagal diproses.')
+      setError(localizedError(requestError, language, t, 'auth.loginFailed'))
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <AuthLayout contextTitle="Kontrol stok konsinyasi dalam satu alur kerja." contextDescription="Akses dibatasi untuk pengguna yang terdaftar. Setiap login, perubahan password, dan aktivitas administrator dicatat pada database operasional.">
-      <div className="mb-8">
-        <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-[#0b4a78]" aria-hidden="true"><LockKeyhole size={20} /></div>
-        <h2 className="text-[28px] font-semibold tracking-[-0.02em] text-slate-950">Masuk ke SOH Consignment</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">Gunakan email atau username yang diberikan administrator.</p>
+    <AuthLayout contextTitle={t('auth.contextTitle')} contextDescription={t('auth.contextDescription')}>
+      <div className='mb-8 border-b border-[var(--border)] pb-6'>
+        <div className='mb-5 flex items-center gap-3'><span className='flex h-10 w-10 items-center justify-center border border-[var(--border)] bg-[var(--surface-raised)] text-[var(--brand-blue)]' aria-hidden='true'><LockKeyhole size={19} /></span><span className='h-px flex-1 bg-[var(--border)]' aria-hidden='true' /></div>
+        <h2 className='text-[28px] font-semibold tracking-[-0.025em] text-[var(--text)]'>{t('auth.loginTitle')}</h2>
+        <p className='mt-2 text-sm leading-6 text-[var(--text-muted)]'>{t('auth.loginDescription')}</p>
       </div>
-      <form onSubmit={submit} className="space-y-5" noValidate>
+
+      <form onSubmit={submit} className='space-y-5' noValidate>
         <div>
-          <FieldLabel htmlFor="login-identifier" required>Email atau username</FieldLabel>
-          <input id="login-identifier" name="username" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} value={identifier} onChange={(event) => setIdentifier(event.target.value)} disabled={busy} className={fieldBase} required autoFocus />
+          <FieldLabel htmlFor='login-identifier' required>{t('auth.identifierLabel')}</FieldLabel>
+          <input id='login-identifier' name='username' type='text' autoComplete='username' autoCapitalize='none' spellCheck={false} value={identifier} onChange={(event) => setIdentifier(event.target.value)} disabled={busy} className={fieldBase} required autoFocus />
         </div>
-        <PasswordField id="login-password" label="Password" value={password} onChange={setPassword} autoComplete="current-password" required disabled={busy} />
-        {error && <div role="alert" className="flex items-start gap-3 border-l-4 border-rose-600 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800"><AlertCircle className="mt-0.5 shrink-0" size={18} aria-hidden="true" /><span>{error}</span></div>}
-        <Button type="submit" size="lg" className="w-full rounded-lg bg-[#0b4a78] hover:bg-[#083b60] focus-visible:ring-[#0b4a78]" disabled={busy || !configured || !identifier.trim() || !password}>{busy ? <><LoaderCircle className="animate-spin" size={18} aria-hidden="true" />Memverifikasi akun</> : 'Masuk'}</Button>
+        <PasswordField id='login-password' label={t('common.password')} value={password} onChange={setPassword} autoComplete='current-password' required disabled={busy} />
+        {error && <div role='alert' className='flex items-start gap-3 border-l-4 border-[#a33945] bg-[#f8e9eb] px-4 py-3 text-sm leading-6 text-[#7f2834]'><AlertCircle className='mt-0.5 shrink-0' size={18} aria-hidden='true' /><span>{error}</span></div>}
+        <Button type='submit' size='lg' className='w-full justify-between px-5' disabled={busy || !configured || !identifier.trim() || !password}><span>{busy ? t('auth.verifying') : t('auth.signIn')}</span>{busy ? <LoaderCircle className='animate-spin' size={18} aria-hidden='true' /> : <ArrowRight size={18} aria-hidden='true' />}</Button>
       </form>
-      <div className="mt-8 border-t border-slate-200 pt-5 text-xs leading-5 text-slate-600">
-        Login pertama mewajibkan perubahan password. Hubungi administrator jika akun terkunci atau kredensial belum tersedia.
-      </div>
+
+      <p className='mt-7 border-t border-[var(--border)] pt-5 text-xs leading-5 text-[var(--text-muted)]'>{t('auth.firstLoginNote')}</p>
     </AuthLayout>
   )
 }
