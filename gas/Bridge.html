@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SOH Consignment Bridge</title>
+  </head>
+  <body>
+    <script>
+      const allowedOrigins = <?!= allowedOriginsJson ?>;
+      const bridgeNonce = <?!= bridgeNonceJson ?>;
+
+      function isAllowedOrigin(origin) {
+        return allowedOrigins.includes(String(origin || '').replace(/\/$/, ''))
+      }
+
+      function respond(target, origin, message) {
+        if (target && isAllowedOrigin(origin)) target.postMessage({ ...message, nonce: bridgeNonce }, origin)
+      }
+
+      window.addEventListener('message', (event) => {
+        if (event.source !== window.top) return
+        if (!isAllowedOrigin(event.origin)) return
+        const message = event.data || {}
+        if (message.type !== 'SOH_BRIDGE_REQUEST' || !message.id || message.nonce !== bridgeNonce) return
+
+        google.script.run
+          .withSuccessHandler((result) => respond(event.source, event.origin, {
+            type: 'SOH_BRIDGE_RESPONSE',
+            id: message.id,
+            result,
+          }))
+          .withFailureHandler((error) => respond(event.source, event.origin, {
+            type: 'SOH_BRIDGE_RESPONSE',
+            id: message.id,
+            result: { error: error && error.message ? error.message : 'Bridge request failed.', code: 'BRIDGE_FAILED' },
+          }))
+          .bridgeRequest(message.request || {})
+      })
+
+      window.top.postMessage({ type: 'SOH_BRIDGE_READY', nonce: bridgeNonce }, '*')
+    </script>
+  </body>
+</html>

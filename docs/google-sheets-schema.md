@@ -6,14 +6,16 @@
 2. Salin isi `gas/Code.gs` dan konfigurasi `gas/appsscript.json` ke project tersebut.
 3. Jalankan `setupDatabase()` satu kali dari editor Apps Script.
 4. Simpan `apiSecret` dari hasil fungsi ke tempat aman. Jangan commit secret ke GitHub.
-5. Deploy project sebagai Web app dengan `Execute as: Me`. Pilihan akses publik mengikuti kebijakan akun Google Workspace.
+5. Jalankan `provisionInitialAdmin()` satu kali. Simpan username dan password sementara di password manager atau file lokal yang di-ignore. Password itu wajib diganti saat login pertama.
+6. Deploy project sebagai Web app dengan `Execute as: Me` dan akses anonymous agar bridge dari hosting statis dapat dimuat.
+7. Pastikan origin hosting sudah ada di `ALLOWED_ORIGINS`. Untuk GitHub Pages gunakan `https://rickopra.github.io`; untuk domain lain jalankan `configureAllowedOrigins([...])` dari editor Apps Script.
 
 `setupDatabase()` akan:
 
 - memakai spreadsheet yang sudah ada jika `SPREADSHEET_ID` sudah tersedia;
 - membuat spreadsheet baru bernama `SOH Command Center DB` jika belum ada;
 - membuat Script Properties `SPREADSHEET_ID` dan `API_SECRET`;
-- membuat empat tab operasional;
+- membuat empat tab operasional dan tiga tab autentikasi;
 - mengisi seed awal 33 master part dan 9 transaksi outbound jika tab masih kosong.
 
 ## Sheet yang dibuat
@@ -24,6 +26,23 @@
 | `OUTBOUND` | Request dan supply part keluar |
 | `INBOUND` | Qty Matdoc, Qty Actual, dan status GR |
 | `STOCK_ADJUSTMENT` | Koreksi setelah stock opname atau investigasi selisih |
+| `USERS` | Akun, role, hash password, status first-login, dan lockout |
+| `AUTH_SESSIONS` | Hash token session, tujuan session, masa berlaku, revoke, dan client |
+| `AUTH_AUDIT` | Catatan login, perubahan password, lockout, dan aksi administrator |
+
+## Alur autentikasi
+
+- `provisionInitialAdmin()` membuat username administrator acak dan password sementara tanpa credential hardcode.
+- Login pertama hanya membuka halaman ganti password. Endpoint operasional tetap menolak session dengan `PASSWORD_CHANGE_REQUIRED`.
+- Password disimpan sebagai HMAC-SHA-256 berulang dengan salt per pengguna dan pepper di Script Properties. Token session yang masuk ke browser tidak disimpan mentah di Sheet.
+- Lima percobaan login gagal mengunci akun selama 15 menit. Administrator dapat membuka lock atau reset password dari menu `Administrasi`.
+- Password reset dari administrator juga menghasilkan credential sementara satu kali dan mewajibkan first-login kembali.
+
+## Hosting statis dan bridge
+
+GitHub Pages memakai `VITE_GAS_BRIDGE_URL` sebagai URL Web App GAS. Frontend memuat bridge tersembunyi, lalu berkomunikasi melalui `postMessage` dengan nonce. API secret tetap berada di Script Properties dan tidak dikirim ke browser.
+
+GitHub Pages gratis memakai URL project `rickopra.github.io/soh-consignment-app/`. Custom domain hanya dapat dipakai jika domain tersebut dimiliki dan diarahkan ke GitHub Pages. Netlify tetap tersedia sebagai opsi proxy serverless melalui environment variables di bawah.
 
 ## Netlify proxy
 

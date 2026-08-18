@@ -1,6 +1,7 @@
 ﻿export type WarehouseType = 'Consignment' | 'Service Point' | 'Warehouse Store'
 export type StockStatus = 'READY' | 'NOT_READY'
 export type GrStatus = 'Pending' | 'Done GR'
+export type UserRole = 'ADMIN' | 'OPERATOR'
 
 export interface Part {
   id: string
@@ -85,4 +86,64 @@ export interface AppData {
   outbound: OutboundTransaction[]
   inbound: InboundTransaction[]
   adjustments: StockAdjustment[]
+}
+
+export interface AuthUser {
+  id: string
+  username: string
+  email: string
+  displayName: string
+  role: UserRole
+  mustChangePassword: boolean
+  lastLoginAt: string
+}
+
+export interface AuthSessionData {
+  token: string
+  expiresAt: string
+  user: AuthUser
+  mustChangePassword: boolean
+}
+
+export interface AdminUser extends AuthUser {
+  active: boolean
+  failedAttempts: number
+  lockedUntil: string
+  passwordChangedAt: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminSession {
+  id: string
+  userId: string
+  username: string
+  displayName: string
+  purpose: 'APP' | 'PASSWORD_CHANGE'
+  createdAt: string
+  expiresAt: string
+  lastSeenAt: string
+  client: string
+}
+
+export interface AuthAuditEntry {
+  id: string
+  eventType: string
+  userId: string
+  username: string
+  outcome: 'SUCCESS' | 'FAILED' | 'BLOCKED' | string
+  details: string
+  createdAt: string
+}
+
+export interface AdminOverview {
+  metrics: {
+    totalUsers: number
+    activeUsers: number
+    lockedUsers: number
+    activeSessions: number
+  }
+  users: AdminUser[]
+  sessions: AdminSession[]
+  audit: AuthAuditEntry[]
 }

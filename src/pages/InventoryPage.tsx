@@ -27,7 +27,7 @@ export default function InventoryPage() {
   })))
 
   return (
-    <div>
+    <div className="operational-view">
       <SectionHeader title="SOH Inventory" description="Stok fisik menunjukkan barang aktual. SOH available sudah memperhitungkan seluruh Qty Request yang dialokasikan." action={<Button variant="secondary" onClick={exportInventory}><Download size={16} />Export CSV</Button>} />
       <Card className="mb-5 p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center">

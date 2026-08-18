@@ -11,7 +11,7 @@ export default function RefillPage() {
   const exportRefill = () => downloadCsv(`Item_Refill_TO_${todayIso()}.csv`, needsRefill.map((item) => ({ 'Part Number': item.partNumber, Description: item.description, 'SOH Sekarang': item.availableStock, 'Qty TO (Refill)': item.refillRecommendation, Lokasi: item.location, Remarks: '' })))
   const exportVoucher = () => downloadCsv(`Parts_Voucher_${todayIso()}.csv`, inventory.map((item) => ({ 'Part Number': item.partNumber, Description: item.description, LOKASI: item.location, STOCK: item.physicalStock, Remarks: '' })))
 
-  return <div>
+  return <div className="operational-view">
     <SectionHeader title="Refill & Voucher" description="Siapkan dokumen dan request transfer order (TO) berdasarkan rekomendasi sistem." />
     <div className="grid gap-6 lg:grid-cols-2">
       <Card className="flex flex-col p-6">

@@ -1,6 +1,4 @@
-﻿import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import seedData from '../data-seed.json'
+import { create } from 'zustand'
 import type {
   AppData,
   InboundTransaction,
@@ -8,74 +6,81 @@ import type {
   Part,
   StockAdjustment,
 } from '../types'
-import { generateId, todayIso } from '../lib/utils'
-import { apiIsConfigured, getBootstrap, postAdjustment, postInbound, postOutbound } from '../lib/api'
+import { todayIso } from '../lib/utils'
+import { ApiError, getBootstrap, postAdjustment, postInbound, postOutbound } from '../lib/api'
+import { useAuthStore } from './authStore'
 
 interface AppStore extends AppData {
-  dataMode: 'demo' | 'connected'
+  dataMode: 'loading' | 'connected'
+  hydrated: boolean
   addOutbound: (transaction: Omit<OutboundTransaction, 'id' | 'createdAt'>) => Promise<void>
   addInbound: (transaction: Omit<InboundTransaction, 'id' | 'createdAt'>) => Promise<void>
   addAdjustment: (adjustment: Omit<StockAdjustment, 'id' | 'createdAt'>) => Promise<void>
   updatePart: (id: string, updates: Partial<Part>) => void
-  resetDemo: () => void
   hydrateFromApi: () => Promise<void>
+  clearData: () => void
 }
 
-const initialData: AppData = {
-  parts: seedData.parts.map((part) => ({
-    ...part,
-    warehouseType: part.warehouseType as Part['warehouseType'],
-    openingStockDate: '2026-03-30',
-  })),
-  outbound: seedData.outbound.map((transaction) => ({
-    ...transaction,
-    warehouseType: transaction.warehouseType as OutboundTransaction['warehouseType'],
-  })),
+const emptyData: AppData = {
+  parts: [],
+  outbound: [],
   inbound: [],
   adjustments: [],
 }
 
-export const useAppStore = create<AppStore>()(
-  persist(
-    (set) => ({
-      ...initialData,
-      dataMode: 'demo',
-      addOutbound: async (transaction) => {
-        const saved = apiIsConfigured() ? (await postOutbound(transaction)).data : { ...transaction, id: generateId('OUT'), createdAt: new Date().toISOString() }
-        set((state) => ({ outbound: [saved, ...state.outbound] }))
-      },
-      addInbound: async (transaction) => {
-        const saved = apiIsConfigured() ? (await postInbound(transaction)).data : { ...transaction, id: generateId('IN'), createdAt: new Date().toISOString() }
-        set((state) => ({ inbound: [saved, ...state.inbound] }))
-      },
-      addAdjustment: async (adjustment) => {
-        const saved = apiIsConfigured() ? (await postAdjustment(adjustment)).data : { ...adjustment, id: generateId('ADJ'), createdAt: new Date().toISOString() }
-        set((state) => ({ adjustments: [saved, ...state.adjustments] }))
-      },
-      updatePart: (id, updates) =>
-        set((state) => ({
-          parts: state.parts.map((part) => (part.id === id ? { ...part, ...updates } : part)),
-        })),
-      resetDemo: () => set({ ...initialData, dataMode: 'demo' }),
-      hydrateFromApi: async () => {
-        if (!apiIsConfigured()) return
-        const response = await getBootstrap()
-        set({ ...response.data, dataMode: 'connected' })
-      },
-    }),
-    {
-      name: 'soh-command-center-v1',
-      version: 1,
-      partialize: ({ parts, outbound, inbound, adjustments, dataMode }) => ({
-        parts,
-        outbound,
-        inbound,
-        adjustments,
-        dataMode,
-      }),
-    },
-  ),
-)
+function sessionToken() {
+  const token = useAuthStore.getState().token
+  if (!token) throw new ApiError('Sesi tidak tersedia.', 'SESSION_REQUIRED')
+  return token
+}
+
+function handleSessionError(error: unknown) {
+  if (error instanceof ApiError && ['SESSION_REQUIRED', 'SESSION_INVALID', 'SESSION_EXPIRED', 'ACCOUNT_INACTIVE'].includes(error.code)) {
+    useAuthStore.getState().clearSession()
+  }
+  throw error
+}
+
+export const useAppStore = create<AppStore>((set) => ({
+  ...emptyData,
+  dataMode: 'loading',
+  hydrated: false,
+  addOutbound: async (transaction) => {
+    try {
+      const saved = (await postOutbound(sessionToken(), transaction)).data
+      set((state) => ({ outbound: [saved, ...state.outbound] }))
+    } catch (error) {
+      handleSessionError(error)
+    }
+  },
+  addInbound: async (transaction) => {
+    try {
+      const saved = (await postInbound(sessionToken(), transaction)).data
+      set((state) => ({ inbound: [saved, ...state.inbound] }))
+    } catch (error) {
+      handleSessionError(error)
+    }
+  },
+  addAdjustment: async (adjustment) => {
+    try {
+      const saved = (await postAdjustment(sessionToken(), adjustment)).data
+      set((state) => ({ adjustments: [saved, ...state.adjustments] }))
+    } catch (error) {
+      handleSessionError(error)
+    }
+  },
+  updatePart: (id, updates) => set((state) => ({ parts: state.parts.map((part) => (part.id === id ? { ...part, ...updates } : part)) })),
+  hydrateFromApi: async () => {
+    set({ dataMode: 'loading', hydrated: false })
+    try {
+      const response = await getBootstrap(sessionToken())
+      set({ ...response.data, dataMode: 'connected', hydrated: true })
+    } catch (error) {
+      handleSessionError(error)
+    }
+  },
+  clearData: () => set({ ...emptyData, dataMode: 'loading', hydrated: false }),
+}))
 
 export const defaultOutboundDraft = {
   requestDate: todayIso(),
@@ -86,7 +91,7 @@ export const defaultOutboundDraft = {
   warehouseType: 'Consignment' as import('../types').WarehouseType,
   documents: { pr: '', po: '', so: '', dn: '', invoice: '' },
   notes: '',
-  createdBy: 'Warehouse Man',
+  createdBy: '',
 }
 
 export const defaultInboundDraft = {
@@ -101,7 +106,5 @@ export const defaultInboundDraft = {
   invoiceOrTo: '',
   source: '',
   notes: '',
-  createdBy: 'Warehouse Man',
+  createdBy: '',
 }
-
-
