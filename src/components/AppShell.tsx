@@ -1,4 +1,4 @@
-﻿import { useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ArrowDownToLine, ArrowUpFromLine, Boxes, ClipboardCheck, LayoutDashboard, Menu, Moon, PackageCheck, Sun, X } from 'lucide-react'
 import { IconButton, StatusBadge } from './ui'
 import { cn } from '../lib/utils'
@@ -40,8 +40,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const sidebar = (
     <aside className="flex h-full w-[288px] flex-col border-r border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-950" aria-label="Navigasi utama">
       <div className="flex h-[76px] items-center gap-3 border-b border-slate-100 px-6 dark:border-slate-800">
-        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20"><PackageCheck size={21} aria-hidden="true" /></div>
-        <div><p className="text-[15px] font-extrabold tracking-tight text-slate-950 dark:text-white">SOH Command</p><p className="text-[11px] font-medium text-slate-400">Consignment control center</p></div>
+        <img src={`${import.meta.env.BASE_URL}brand/brand-mark-512.png`} alt="SOH Consignment" className="h-10 w-10 rounded-2xl object-cover shadow-sm ring-1 ring-slate-900/5 dark:ring-white/10" />
+        <div><p className="text-[15px] font-extrabold tracking-tight text-slate-950 dark:text-white">SOH Consignment</p><p className="text-[11px] font-medium text-slate-400">Consignment control center</p></div>
         <div className="ml-auto lg:hidden"><IconButton label="Tutup navigasi" onClick={() => setMobileOpen(false)}><X size={18} /></IconButton></div>
       </div>
       <div className="px-4 pt-6">

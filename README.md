@@ -1,4 +1,4 @@
-﻿# SOH Command Center
+# SOH Command Center
 
 Aplikasi monitoring stok Consignment berbasis React dengan Google Apps Script + Google Sheets sebagai database. Frontend memakai hosting statis dan proxy serverless sehingga URL GAS serta API secret tidak dikirim ke browser.
 
@@ -60,6 +60,9 @@ Netlify memberikan subdomain gratis `*.netlify.app`. Jika memiliki domain sendir
 
 Detail skema ada di `docs/google-sheets-schema.md`.
 
+## Branding
+
+Source logo disimpan di `media/`. Jalankan `npm run assets:brand` setelah mengganti source untuk membuat favicon, logo UI, icon manifest, dan social card teroptimasi di `public/brand/`.
 ## Keamanan
 
 Jangan commit `API_SECRET`, `.clasp.json`, atau file environment production. Browser hanya mengakses endpoint `/api/*`; secret disimpan di environment variable Netlify dan Script Properties Apps Script.

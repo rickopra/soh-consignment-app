@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "build:demo": "tsc -b && vite build --mode demo"
+    "build:demo": "tsc -b && vite build --mode demo",
+    "assets:brand": "node scripts/generate-brand-assets.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -28,6 +29,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
     "oxlint": "^1.75.0",
+    "sharp": "^0.35.3",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"
