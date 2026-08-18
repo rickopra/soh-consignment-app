@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { calculateInventory, downloadCsv } from '../lib/utils'
 import { Button, Card, SectionHeader, StatusBadge } from '../components/ui'

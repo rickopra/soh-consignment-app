@@ -1,0 +1,16 @@
+{
+  "scriptId": "1q2hiaxTSIsTGhVji9UG6qfRzrcvEb6AiV25CEfK4Yj0l_4291-VYrmWf",
+  "rootDir": "gas-remote-review",
+  "scriptExtensions": [
+    ".js",
+    ".gs"
+  ],
+  "htmlExtensions": [
+    ".html"
+  ],
+  "jsonExtensions": [
+    ".json"
+  ],
+  "filePushOrder": [],
+  "skipSubdirectories": false
+}

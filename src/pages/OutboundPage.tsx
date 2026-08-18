@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppStore, defaultOutboundDraft } from '../store/appStore'
-import { Button, Card, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextField, useToast } from '../components/ui'
+import { Button, Card, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextField, } from '../components/ui'
+import { useToast } from '../components/toast'
 import { ArrowUpFromLine, Plus, Search } from 'lucide-react'
 import type { OutboundDocuments, WarehouseType } from '../types'
 import { formatDate } from '../lib/utils'

@@ -1,6 +1,6 @@
-﻿import { createPortal } from 'react-dom'
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { AlertCircle, Check, ChevronDown, Info, LoaderCircle, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { useEffect, useRef, type ReactNode } from 'react'
+import { AlertCircle, ChevronDown, LoaderCircle, X } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 const variants = {
@@ -55,19 +55,10 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
   return createPortal(<div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}><div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby={description ? 'modal-description' : undefined} className={cn('max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white shadow-2xl outline-none dark:bg-slate-900 sm:rounded-3xl', size === 'sm' && 'max-w-md', size === 'lg' ? 'max-w-3xl' : 'max-w-xl')}><div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 sm:px-6"><div><h2 id="modal-title" className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">{title}</h2>{description && <p id="modal-description" className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>}</div><IconButton label="Tutup dialog" onClick={onClose}><X size={18} /></IconButton></div><div className="p-5 sm:p-6">{children}</div></div></div>, document.body)
 }
 
-type Toast = { id: number; title: string; description?: string; tone: 'success' | 'info' | 'error' }
-const ToastContext = createContext<{ push: (toast: Omit<Toast, 'id'>) => void } | null>(null)
-
-export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<Toast[]>([])
-  const push = (toast: Omit<Toast, 'id'>) => { const id = Date.now() + Math.random(); setToasts((current) => [...current, { ...toast, id }]); window.setTimeout(() => setToasts((current) => current.filter((item) => item.id !== id)), 4200) }
-  return <ToastContext.Provider value={{ push }}>{children}{createPortal(<div className="fixed bottom-4 right-4 z-[60] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-3" aria-live="polite" aria-atomic="true">{toasts.map((toast) => <div key={toast.id} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-700 dark:bg-slate-900" role={toast.tone === 'error' ? 'alert' : 'status'}><span className={cn('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl', toast.tone === 'success' && 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300', toast.tone === 'info' && 'bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-300', toast.tone === 'error' && 'bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-300')}>{toast.tone === 'success' && <Check size={16} aria-hidden="true" />}{toast.tone === 'info' && <Info size={16} aria-hidden="true" />}{toast.tone === 'error' && <AlertCircle size={16} aria-hidden="true" />}</span><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-slate-900 dark:text-white">{toast.title}</p>{toast.description && <p className="mt-0.5 text-xs leading-5 text-slate-500 dark:text-slate-400">{toast.description}</p>}</div></div>)}</div>, document.body)}</ToastContext.Provider>
-}
-
-export function useToast() { const context = useContext(ToastContext); if (!context) throw new Error('useToast must be used inside ToastProvider'); return context }
-
 export function SectionHeader({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
   return <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div>{eyebrow && <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">{eyebrow}</p>}<h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">{title}</h1>{description && <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">{description}</p>}</div>{action && <div className="shrink-0">{action}</div>}</div>
 }
 
 export function LoadingState() { return <div className="flex min-h-48 items-center justify-center text-slate-400"><LoaderCircle className="animate-spin" size={24} aria-label="Memuat" /></div> }
+
+

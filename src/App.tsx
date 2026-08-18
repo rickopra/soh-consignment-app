@@ -1,6 +1,6 @@
-﻿import { useEffect } from 'react'
+import { useEffect } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import { ToastProvider } from './components/ui'
+import { ToastProvider } from './components/ToastProvider'
 import { AppShell } from './components/AppShell'
 import DashboardPage from './pages/DashboardPage'
 import InventoryPage from './pages/InventoryPage'
