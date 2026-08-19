@@ -114,15 +114,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
       </div>
 
-      <div className='mt-auto border-t border-white/10 px-5 py-5'>
-        <div className='flex items-center gap-3'>
-          <span className='flex h-8 w-8 shrink-0 items-center justify-center bg-[#254d6b] text-xs font-semibold text-white'>{initials(user?.displayName ?? '')}</span>
-          <div className='min-w-0'>
-            <p className='truncate text-xs font-semibold text-white'>{user?.displayName}</p>
-            <p className='mt-0.5 truncate text-[10px] text-[#8fa9b8]'>{user?.role === 'ADMIN' ? t('common.administrator') : t('common.operator')}</p>
-          </div>
-        </div>
-      </div>
     </aside>
   )
 
@@ -141,7 +132,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <button type='button' onClick={() => setAccountOpen((current) => !current)} className='flex min-h-11 items-center gap-2 px-1.5 text-left transition-colors hover:bg-[var(--surface-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)]' aria-haspopup='menu' aria-expanded={accountOpen} aria-label={t('shell.accountMenu')}>
                   <span className='flex h-9 w-9 items-center justify-center bg-[var(--brand-blue)] text-xs font-semibold text-white'>{initials(user?.displayName ?? '')}</span><span className='hidden sm:block'><span className='block max-w-36 truncate text-xs font-semibold text-[var(--text)]'>{user?.displayName}</span><span className='block text-[10px] text-[var(--text-muted)]'>{user?.role === 'ADMIN' ? t('common.administrator') : t('common.operator')}</span></span><ChevronDown size={15} className='hidden text-[var(--text-muted)] sm:block' aria-hidden='true' />
                 </button>
-                {accountOpen && <div role='menu' className='absolute right-0 top-[calc(100%+8px)] z-40 w-60 border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-xl'><div className='border-b border-[var(--border)] px-3 py-2.5'><p className='truncate text-xs font-semibold text-[var(--text)]'>{user?.username}</p><p className='mt-0.5 truncate text-[11px] text-[var(--text-muted)]'>{user?.email || t('shell.emailMissing')}</p></div><button role='menuitem' type='button' onClick={() => { setAccountOpen(false); setPasswordOpen(true) }} className='mt-1 flex min-h-10 w-full items-center gap-2 px-3 text-sm text-[var(--text)] hover:bg-[var(--surface-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]'><KeyRound size={16} aria-hidden='true' />{t('shell.changePassword')}</button><button role='menuitem' type='button' onClick={() => void signOut()} className='flex min-h-10 w-full items-center gap-2 px-3 text-sm text-[#a33945] hover:bg-[#f8e9eb] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a33945]'><LogOut size={16} aria-hidden='true' />{t('common.signOut')}</button></div>}
+                {accountOpen && <div role='menu' className='absolute right-0 top-[calc(100%+8px)] z-40 w-60 border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-xl'><div className='border-b border-[var(--border)] px-3 py-2.5'><p className='truncate text-xs font-semibold text-[var(--text)]'>{user?.displayName}</p><p className='mt-0.5 truncate text-[11px] text-[var(--text-muted)]'>{user?.username}</p></div><button role='menuitem' type='button' onClick={() => { setAccountOpen(false); setPasswordOpen(true) }} className='mt-1 flex min-h-10 w-full items-center gap-2 px-3 text-sm text-[var(--text)] hover:bg-[var(--surface-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]'><KeyRound size={16} aria-hidden='true' />{t('shell.changePassword')}</button><button role='menuitem' type='button' onClick={() => void signOut()} className='flex min-h-10 w-full items-center gap-2 px-3 text-sm text-[#a33945] hover:bg-[#f8e9eb] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a33945]'><LogOut size={16} aria-hidden='true' />{t('common.signOut')}</button></div>}
               </div>
             </div>
           </header>
