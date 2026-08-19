@@ -65,13 +65,13 @@ button:not(:disabled), select:not(:disabled) { cursor: pointer; }
 
 .auth-surface {
   color-scheme: light;
-  --canvas: #e8edf0;
-  --surface: #f8faf9;
+  --canvas: #dfe6e9;
+  --surface: #f5f7f7;
   --surface-raised: #ffffff;
-  --surface-muted: #eef2f3;
+  --surface-muted: #e9eef0;
   --surface-strong: #dfe6e9;
-  --border: #cad5da;
-  --border-strong: #a9b8c0;
+  --border: #c4d0d5;
+  --border-strong: #9fb1ba;
   --text: #172a36;
   --text-muted: #536875;
   --text-subtle: #71838d;
@@ -85,11 +85,6 @@ button:not(:disabled), select:not(:disabled) { cursor: pointer; }
 .data-table td { border-bottom: 1px solid var(--border); padding: 14px 16px; font-size: 13px; vertical-align: top; }
 .data-table tbody tr:last-child td { border-bottom: 0; }
 .data-table tbody tr:hover { background: color-mix(in srgb, var(--surface-muted) 70%, transparent); }
-.dark .auth-light button[aria-label="Tampilkan password"],
-.dark .auth-light button[aria-label="Sembunyikan password"] { color: #64748b; }
-.dark .auth-light button[aria-label="Tampilkan password"]:hover,
-.dark .auth-light button[aria-label="Sembunyikan password"]:hover { color: #0f172a; }
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }

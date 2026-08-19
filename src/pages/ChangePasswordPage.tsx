@@ -44,7 +44,7 @@ export default function ChangePasswordPage() {
       <div className='mb-8 border-b border-[var(--border)] pb-6'>
         <div className='mb-5 flex items-center gap-3'><span className='flex h-10 w-10 items-center justify-center border border-[var(--border)] bg-[var(--surface-raised)] text-[var(--brand-blue)]' aria-hidden='true'><ShieldCheck size={20} /></span><span className='h-px flex-1 bg-[var(--border)]' aria-hidden='true' /></div>
         <p className='mb-1 text-sm font-medium text-[var(--brand-blue)]'>{user?.displayName}</p>
-        <h2 className='text-[28px] font-semibold tracking-[-0.025em] text-[var(--text)]'>{t('auth.changeTitle')}</h2>
+        <h1 className='text-[28px] font-semibold tracking-[-0.025em] text-[var(--text)]'>{t('auth.changeTitle')}</h1>
         <p className='mt-2 text-sm leading-6 text-[var(--text-muted)]'>{t('auth.changeDescription')}</p>
       </div>
 
