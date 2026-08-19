@@ -27,7 +27,8 @@ dist-ssr
 .env.demo
 .env.production
 gas-remote-review/
-functions/
+# Local Netlify function build output.
+netlify/functions/
 wrangler.toml
 qa-dashboard.png
 qa-*.png
