@@ -13,11 +13,11 @@ const variants = {
 } as const
 
 export function Button({ children, className, variant = 'primary', size = 'md', type = 'button', disabled, onClick, ariaLabel }: { children: ReactNode; className?: string; variant?: keyof typeof variants; size?: 'sm' | 'md' | 'lg'; type?: 'button' | 'submit' | 'reset'; disabled?: boolean; onClick?: () => void; ariaLabel?: string }) {
-  return <button type={type} className={cn('inline-flex items-center justify-center gap-2 rounded-[6px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] disabled:cursor-not-allowed disabled:opacity-50', variants[variant], size === 'sm' ? 'min-h-9 px-3 text-xs' : size === 'lg' ? 'min-h-12 px-5 text-sm' : 'min-h-10 px-4 text-sm', className)} disabled={disabled} onClick={onClick} aria-label={ariaLabel}>{children}</button>
+  return <button type={type} className={cn('inline-flex items-center justify-center gap-2 rounded-[8px] font-semibold transition-[background-color,border-color,color,box-shadow,transform] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0', variants[variant], size === 'sm' ? 'min-h-9 px-3 text-xs' : size === 'lg' ? 'min-h-12 px-5 text-sm' : 'min-h-10 px-4 text-sm', className)} disabled={disabled} onClick={onClick} aria-label={ariaLabel}>{children}</button>
 }
 
 export function IconButton({ children, label, className, variant = 'ghost', onClick }: { children: ReactNode; label: string; className?: string; variant?: keyof typeof variants; onClick?: () => void }) {
-  return <button type='button' className={cn('inline-flex h-10 w-10 items-center justify-center rounded-[6px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]', variants[variant], className)} aria-label={label} title={label} onClick={onClick}>{children}</button>
+  return <button type='button' className={cn('inline-flex h-10 w-10 items-center justify-center rounded-[8px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]', variants[variant], className)} aria-label={label} title={label} onClick={onClick}>{children}</button>
 }
 
 export function Card({ children, className, as = 'section' }: { children: ReactNode; className?: string; as?: 'section' | 'div' | 'article' }) {
@@ -33,14 +33,14 @@ const statusStyles = {
 } as const
 
 export function StatusBadge({ status, children }: { status: keyof typeof statusStyles; children: ReactNode; surface?: 'light' | 'adaptive' }) {
-  return <span className={cn('inline-flex min-h-6 items-center rounded-[4px] border px-2 py-0.5 text-[11px] font-semibold leading-4', statusStyles[status])}>{children}</span>
+  return <span className={cn('status-badge inline-flex min-h-6 items-center rounded-[5px] border px-2 py-0.5 text-[11px] font-semibold leading-4', statusStyles[status])}>{children}</span>
 }
 
 export function FieldLabel({ htmlFor, children, required, hint }: { htmlFor: string; children: ReactNode; required?: boolean; hint?: string }) {
   return <label htmlFor={htmlFor} className='mb-2 block text-sm font-semibold text-[var(--text)]'>{children} {required && <span className='text-[var(--brand-orange)]' aria-hidden='true'>*</span>}{hint && <span className='ml-2 font-normal text-[var(--text-subtle)]'>{hint}</span>}</label>
 }
 
-export const fieldBase = 'min-h-11 w-full rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3.5 text-sm text-[var(--text)] outline-none transition placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10 disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:opacity-70'
+export const fieldBase = 'min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3.5 text-sm text-[var(--text)] outline-none transition placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10 disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:opacity-70'
 
 export function TextField({ id, label, value, onChange, placeholder, required, hint, type = 'text', error, disabled }: { id: string; label: string; value: string; onChange: (value: string) => void; placeholder?: string; required?: boolean; hint?: string; type?: 'text' | 'date' | 'search' | 'email'; error?: string; disabled?: boolean }) {
   return <div><FieldLabel htmlFor={id} required={required} hint={hint}>{label}</FieldLabel><input id={id} type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} disabled={disabled} className={cn(fieldBase, error && 'border-[#a33945] focus:border-[#a33945]')} aria-invalid={Boolean(error)} aria-describedby={error ? `${id}-error` : undefined} />{error && <p id={`${id}-error`} className='mt-1.5 flex items-center gap-1 text-xs text-[#a33945]'><AlertCircle size={13} aria-hidden='true' />{error}</p>}</div>
@@ -99,7 +99,7 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
   if (!open) return null
   return createPortal(
     <div className='fixed inset-0 z-50 flex items-end justify-center bg-[#07131d]/65 p-0 sm:items-center sm:p-4' role='presentation' onMouseDown={(event) => { if (event.target === event.currentTarget) onCloseRef.current() }}>
-      <div ref={dialogRef} tabIndex={-1} role='dialog' aria-modal='true' aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} className={cn('max-h-[92vh] w-full overflow-y-auto rounded-[8px] border border-[var(--border)] bg-[var(--surface)] shadow-2xl outline-none', size === 'sm' && 'max-w-md', size === 'lg' ? 'max-w-4xl' : 'max-w-xl')}>
+      <div ref={dialogRef} tabIndex={-1} role='dialog' aria-modal='true' aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} className={cn('max-h-[92vh] w-full overflow-y-auto rounded-t-[14px] border border-[var(--border)] bg-[var(--surface)] shadow-2xl outline-none sm:rounded-[14px]', size === 'sm' && 'max-w-md', size === 'lg' ? 'max-w-4xl' : 'max-w-xl')}>
         <div className='sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[var(--border)] bg-[var(--surface)] px-5 py-4 sm:px-6'>
           <div><h2 id={titleId} className='text-lg font-semibold tracking-tight text-[var(--text)]'>{title}</h2>{description && <p id={descriptionId} className='mt-1 text-sm leading-5 text-[var(--text-muted)]'>{description}</p>}</div>
           <IconButton label={t('common.close')} onClick={() => onCloseRef.current()}><X size={18} /></IconButton>

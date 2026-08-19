@@ -40,6 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     { to: '/refill', label: t('nav.refill'), caption: t('nav.refillCaption'), icon: PackageCheck },
     ...(user?.role === 'ADMIN' ? [{ to: '/admin', label: t('nav.admin'), caption: t('nav.adminCaption'), icon: UserCog }] : []),
   ]
+  const mobileNavItems = navItems.filter((item) => item.to !== '/admin')
   const pageMeta = {
     '/': { title: t('page.overviewTitle'), subtitle: t('page.overviewSubtitle') },
     '/inventory': { title: t('page.inventoryTitle'), subtitle: t('page.inventorySubtitle') },
@@ -95,50 +96,54 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   const sidebar = (
-    <aside className='flex h-full w-[268px] flex-col bg-[var(--sidebar)] text-white' aria-label={t('shell.primaryNavigation')}>
-      <div className='flex h-[76px] items-center gap-3 border-b border-white/10 px-5'>
-        <span className='flex h-10 w-10 items-center justify-center bg-white'><img src={brandMark} alt='' className='h-9 w-9 object-cover' aria-hidden='true' /></span>
-        <div className='min-w-0'><p className='truncate text-[15px] font-semibold tracking-tight'>SOH Consignment</p><p className='mt-0.5 truncate text-[10px] font-medium uppercase tracking-[0.08em] text-[#93adbd]'>{t('shell.productCaption')}</p></div>
+    <aside className='app-sidebar' aria-label={t('shell.primaryNavigation')}>
+      <div className='app-sidebar-brand'>
+        <span className='app-sidebar-mark'><img src={brandMark} alt='' aria-hidden='true' /></span>
+        <div className='min-w-0'><p>SOH</p><span>Consignment</span></div>
         <div className='ml-auto lg:hidden'><IconButton label={t('shell.closeNavigation')} className='text-slate-200 hover:border-white/20 hover:bg-white/10 hover:text-white' onClick={() => setMobileOpen(false)}><X size={18} /></IconButton></div>
       </div>
 
-      <div className='px-3 pt-6'>
-        <p className='mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.13em] text-[#7896a8]'>{t('nav.workspace')}</p>
-        <nav className='space-y-1'>
-          {navItems.map(({ to, label, caption, icon: Icon }) => (
-            <RouterNavLink key={to} to={to} end={to === '/'} onClick={() => setMobileOpen(false)} className={({ isActive }) => cn('group relative grid min-h-[54px] grid-cols-[34px_1fr] items-center gap-3 border border-transparent px-3 py-2.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]', isActive ? 'border-white/10 bg-[var(--sidebar-raised)] text-white before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[var(--brand-orange-bright)]' : 'text-[#b8c9d2] hover:bg-white/[0.06] hover:text-white')}>
-              <Icon size={18} className='justify-self-center' aria-hidden='true' />
-              <span className='min-w-0'><span className='block truncate text-sm font-semibold'>{label}</span><span className='mt-0.5 block truncate text-[10px] text-[#8fa9b8]'>{caption}</span></span>
+      <div className='app-sidebar-nav-wrap'>
+        <p className='app-sidebar-label'>{t('nav.workspace')}</p>
+        <nav className='app-sidebar-nav'>
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <RouterNavLink key={to} to={to} end={to === '/'} onClick={() => setMobileOpen(false)} className={({ isActive }) => cn('app-sidebar-link', isActive && 'is-active')}>
+              <Icon size={18} aria-hidden='true' />
+              <span>{label}</span>
             </RouterNavLink>
           ))}
         </nav>
       </div>
-
+      <div className='app-sidebar-foot' aria-hidden='true'><span />SOH / OPS</div>
     </aside>
   )
 
   return (
-    <div className='min-h-screen bg-[var(--canvas)] text-[var(--text)]'>
+    <div className='app-shell min-h-screen bg-[var(--canvas)] text-[var(--text)]'>
       <a href='#main-content' className='sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:bg-[var(--sidebar)] focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-white'>{t('shell.skipToContent')}</a>
       <div className='flex min-h-screen'>
         <div className='hidden lg:block'>{sidebar}</div>
-        {mobileOpen && <div className='fixed inset-0 z-40 bg-[#07131d]/65 lg:hidden' onClick={() => setMobileOpen(false)} aria-hidden='true' />}
-        <div className={cn('fixed inset-y-0 left-0 z-50 transition-transform duration-200 lg:hidden', mobileOpen ? 'translate-x-0' : '-translate-x-full')}>{sidebar}</div>
-        <div className='min-w-0 flex-1'>
-          <header className='sticky top-0 z-30 flex min-h-[76px] items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--surface)] px-4 sm:px-6 xl:px-9' aria-label={t('shell.applicationHeader')}>
-            <div className='flex min-w-0 items-center gap-3'><div className='lg:hidden'><IconButton label={t('shell.openNavigation')} onClick={() => setMobileOpen(true)}><Menu size={19} /></IconButton></div><div className='min-w-0'><p className='text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-orange)]'>{meta.title}</p><h2 className='truncate text-base font-semibold tracking-tight text-[var(--text)]'>{meta.subtitle}</h2></div></div>
+        {mobileOpen && <div className='app-mobile-backdrop' onClick={() => setMobileOpen(false)} aria-hidden='true' />}
+        <div className={cn('app-mobile-drawer', mobileOpen && 'is-open')}>{sidebar}</div>
+        <div className='app-main-column min-w-0 flex-1'>
+          <header className='app-topbar' aria-label={t('shell.applicationHeader')}>
+            <div className='flex min-w-0 items-center gap-3'><div className='lg:hidden'><IconButton label={t('shell.openNavigation')} onClick={() => setMobileOpen(true)}><Menu size={19} /></IconButton></div><div className='min-w-0'><p className='app-topbar-kicker'>{meta.title}</p><h2>{meta.subtitle}</h2></div></div>
             <div className='flex items-center gap-2 sm:gap-3'><LanguageSwitcher compact /><IconButton label={dark ? t('shell.lightMode') : t('shell.darkMode')} onClick={toggleTheme}>{dark ? <Sun size={17} /> : <Moon size={17} />}</IconButton><div className='hidden h-7 w-px bg-[var(--border)] sm:block' aria-hidden='true' />
               <div className='relative' ref={accountRef}>
-                <button type='button' onClick={() => setAccountOpen((current) => !current)} className='flex min-h-11 items-center gap-2 px-1.5 text-left transition-colors hover:bg-[var(--surface-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)]' aria-haspopup='menu' aria-expanded={accountOpen} aria-label={t('shell.accountMenu')}>
-                  <span className='flex h-9 w-9 items-center justify-center bg-[var(--brand-blue)] text-xs font-semibold text-white'>{initials(user?.displayName ?? '')}</span><span className='hidden sm:block'><span className='block max-w-36 truncate text-xs font-semibold text-[var(--text)]'>{user?.displayName}</span><span className='block text-[10px] text-[var(--text-muted)]'>{user?.role === 'ADMIN' ? t('common.administrator') : t('common.operator')}</span></span><ChevronDown size={15} className='hidden text-[var(--text-muted)] sm:block' aria-hidden='true' />
+                <button type='button' onClick={() => setAccountOpen((current) => !current)} className='app-account-trigger' aria-haspopup='menu' aria-expanded={accountOpen} aria-label={t('shell.accountMenu')}>
+                  <span className='app-account-avatar'>{initials(user?.displayName ?? '')}</span><span className='hidden sm:block'><span className='block max-w-36 truncate text-xs font-semibold text-[var(--text)]'>{user?.displayName}</span><span className='block text-[10px] text-[var(--text-muted)]'>{user?.role === 'ADMIN' ? t('common.administrator') : t('common.operator')}</span></span><ChevronDown size={15} className='hidden text-[var(--text-muted)] sm:block' aria-hidden='true' />
                 </button>
-                {accountOpen && <div role='menu' className='absolute right-0 top-[calc(100%+8px)] z-40 w-60 border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-xl'><div className='border-b border-[var(--border)] px-3 py-2.5'><p className='truncate text-xs font-semibold text-[var(--text)]'>{user?.displayName}</p><p className='mt-0.5 truncate text-[11px] text-[var(--text-muted)]'>{user?.username}</p></div><button role='menuitem' type='button' onClick={() => { setAccountOpen(false); setPasswordOpen(true) }} className='mt-1 flex min-h-10 w-full items-center gap-2 px-3 text-sm text-[var(--text)] hover:bg-[var(--surface-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]'><KeyRound size={16} aria-hidden='true' />{t('shell.changePassword')}</button><button role='menuitem' type='button' onClick={() => void signOut()} className='flex min-h-10 w-full items-center gap-2 px-3 text-sm text-[#a33945] hover:bg-[#f8e9eb] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#a33945]'><LogOut size={16} aria-hidden='true' />{t('common.signOut')}</button></div>}
+                {accountOpen && <div role='menu' className='app-account-menu'><div className='app-account-menu-head'><p>{user?.displayName}</p><span>{user?.username}</span></div><button role='menuitem' type='button' onClick={() => { setAccountOpen(false); setPasswordOpen(true) }}><KeyRound size={16} aria-hidden='true' />{t('shell.changePassword')}</button><button role='menuitem' type='button' className='is-danger' onClick={() => void signOut()}><LogOut size={16} aria-hidden='true' />{t('common.signOut')}</button></div>}
               </div>
             </div>
           </header>
-          <main id='main-content' className='mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8 xl:px-9'>{children}</main>
+          <main id='main-content' className='app-content'>{children}</main>
         </div>
       </div>
+
+      <nav className='mobile-bottom-nav lg:hidden' aria-label={t('shell.primaryNavigation')}>
+        {mobileNavItems.map(({ to, label, icon: Icon }) => <RouterNavLink key={to} to={to} end={to === '/'} className={({ isActive }) => cn('mobile-bottom-link', isActive && 'is-active')}><Icon size={19} aria-hidden='true' /><span>{label}</span></RouterNavLink>)}
+      </nav>
 
       <Modal open={passwordOpen} onClose={() => setPasswordOpen(false)} title={t('shell.changePassword')} description={t('shell.changePasswordDescription')} size='sm'>
         <div className='space-y-4'><PasswordField id='current-password' label={t('common.currentPassword')} value={passwordForm.currentPassword} onChange={(value) => setPasswordForm((current) => ({ ...current, currentPassword: value }))} autoComplete='current-password' required disabled={passwordBusy} /><PasswordField id='profile-new-password' label={t('common.newPassword')} value={passwordForm.newPassword} onChange={(value) => setPasswordForm((current) => ({ ...current, newPassword: value }))} autoComplete='new-password' required disabled={passwordBusy} hint={t('shell.passwordHint')} /><PasswordField id='profile-confirm-password' label={t('common.confirmPassword')} value={passwordForm.confirmPassword} onChange={(value) => setPasswordForm((current) => ({ ...current, confirmPassword: value }))} autoComplete='new-password' required disabled={passwordBusy} />{passwordError && <p role='alert' className='border-l-4 border-[#a33945] bg-[#f8e9eb] px-4 py-3 text-sm text-[#7f2834]'>{passwordError}</p>}<div className='flex justify-end gap-2 border-t border-[var(--border)] pt-4'><Button variant='secondary' onClick={() => setPasswordOpen(false)} disabled={passwordBusy}>{t('common.cancel')}</Button><Button onClick={() => void submitPassword()} disabled={passwordBusy || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}>{passwordBusy ? t('common.saving') : t('shell.savePassword')}</Button></div></div>
