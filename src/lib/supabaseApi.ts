@@ -47,7 +47,7 @@ function toAuthUser(profile: ProfileRow): AuthUser {
   return {
     id: profile.id,
     username: profile.username,
-    email: profile.contact_email || profile.auth_email,
+    email: profile.contact_email || '',
     displayName: profile.display_name,
     role: profile.role,
     mustChangePassword: profile.must_change_password,

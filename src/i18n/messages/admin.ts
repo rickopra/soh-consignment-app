@@ -2,7 +2,7 @@ export const adminMessages = {
   id: {
     'admin.eyebrow': 'Administrasi',
     'admin.title': 'Kontrol akses',
-    'admin.description': 'Kelola akun, sesi, dan catatan autentikasi tanpa mengubah data operasional.',
+    'admin.description': 'Kelola pengguna dan hak akses.',
     'admin.newUser': 'Pengguna baru',
     'admin.totalUsers': 'Total pengguna',
     'admin.activeUsers': 'Pengguna aktif',
@@ -77,7 +77,7 @@ export const adminMessages = {
   en: {
     'admin.eyebrow': 'Administration',
     'admin.title': 'Access control',
-    'admin.description': 'Manage accounts, sessions, and authentication records without changing operational data.',
+    'admin.description': 'Manage users and access permissions.',
     'admin.newUser': 'New user',
     'admin.totalUsers': 'Total users',
     'admin.activeUsers': 'Active users',
