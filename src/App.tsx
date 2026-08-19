@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AlertTriangle, LoaderCircle } from 'lucide-react'
 import { AppShell } from './components/AppShell'
@@ -34,6 +34,11 @@ function AuthenticatedApplication() {
   const hydrated = useAppStore((state) => state.hydrated)
   const clearData = useAppStore((state) => state.clearData)
   const [loadError, setLoadError] = useState('')
+  const localization = useRef({ language, t })
+
+  useEffect(() => {
+    localization.current = { language, t }
+  }, [language, t])
 
   const hydrate = async () => {
     setLoadError('')
@@ -42,7 +47,10 @@ function AuthenticatedApplication() {
   }
 
   useEffect(() => {
-    void hydrateFromApi().catch((error) => setLoadError(localizedError(error, language, t, 'app.loadErrorFallback')))
+    void hydrateFromApi().catch((error) => {
+      const current = localization.current
+      setLoadError(localizedError(error, current.language, current.t, 'app.loadErrorFallback'))
+    })
     return () => clearData()
   }, [clearData, hydrateFromApi])
 

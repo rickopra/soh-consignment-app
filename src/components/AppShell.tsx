@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowDownToLine, ArrowUpFromLine, Boxes, ChevronDown, CircleCheck, KeyRound, LayoutDashboard, LogOut, Menu, Moon, PackageCheck, Sun, UserCog, X } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Boxes, ChevronDown, KeyRound, LayoutDashboard, LogOut, Menu, Moon, PackageCheck, Sun, UserCog, X } from 'lucide-react'
 import { NavLink as RouterNavLink, useLocation } from 'react-router-dom'
 import brandMark from '../assets/brand/brand-mark-512.png'
 import { useLanguage } from '../i18n/useLanguage'
@@ -9,7 +9,7 @@ import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { useToast } from './toast'
-import { Button, IconButton, Modal, PasswordField, StatusBadge } from './ui'
+import { Button, IconButton, Modal, PasswordField } from './ui'
 
 function initials(value: string) {
   return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'US'
