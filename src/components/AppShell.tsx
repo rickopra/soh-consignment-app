@@ -115,9 +115,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       <div className='mt-auto border-t border-white/10 px-5 py-5'>
-        <div className='flex items-start gap-3'>
-          <CircleCheck size={18} className='mt-0.5 shrink-0 text-[#73c5a4]' aria-hidden='true' />
-          <div className='min-w-0'><div className='flex items-center gap-2'><p className='text-xs font-semibold'>{t('shell.connectionTitle')}</p><StatusBadge status='ready'>{t('shell.connected')}</StatusBadge></div><p className='mt-1.5 text-[11px] leading-5 text-[#93adbd]'>{t('shell.connectionDescription')}</p></div>
+        <div className='flex items-center gap-3'>
+          <span className='flex h-8 w-8 shrink-0 items-center justify-center bg-[#254d6b] text-xs font-semibold text-white'>{initials(user?.displayName ?? '')}</span>
+          <div className='min-w-0'>
+            <p className='truncate text-xs font-semibold text-white'>{user?.displayName}</p>
+            <p className='mt-0.5 truncate text-[10px] text-[#8fa9b8]'>{user?.role === 'ADMIN' ? t('common.administrator') : t('common.operator')}</p>
+          </div>
         </div>
       </div>
     </aside>
