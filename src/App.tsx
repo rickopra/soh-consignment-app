@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AlertTriangle, LoaderCircle } from 'lucide-react'
 import { AppShell } from './components/AppShell'
@@ -8,17 +8,18 @@ import brandMark from './assets/brand/brand-mark-512.png'
 import { useLanguage } from './i18n/useLanguage'
 import type { TranslationKey } from './i18n/translations'
 import { localizedError } from './lib/localizedError'
-import AdminPage from './pages/AdminPage'
 import ChangePasswordPage from './pages/ChangePasswordPage'
-import DashboardPage from './pages/DashboardPage'
-import InboundPage from './pages/InboundPage'
-import InventoryPage from './pages/InventoryPage'
 import LoginPage from './pages/LoginPage'
-import OutboundPage from './pages/OutboundPage'
-import RefillPage from './pages/RefillPage'
 import { useAppStore } from './store/appStore'
 import { useAuthStore } from './store/authStore'
 import './App.css'
+
+const AdminPage = lazy(() => import('./pages/AdminPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const InboundPage = lazy(() => import('./pages/InboundPage'))
+const InventoryPage = lazy(() => import('./pages/InventoryPage'))
+const OutboundPage = lazy(() => import('./pages/OutboundPage'))
+const RefillPage = lazy(() => import('./pages/RefillPage'))
 
 function AppLoading({ label = 'app.loadingSession' }: { label?: TranslationKey }) {
   const { t } = useLanguage()
@@ -43,12 +44,12 @@ function AuthenticatedApplication() {
   useEffect(() => {
     void hydrateFromApi().catch((error) => setLoadError(localizedError(error, language, t, 'app.loadErrorFallback')))
     return () => clearData()
-  }, [clearData, hydrateFromApi, language, t])
+  }, [clearData, hydrateFromApi])
 
   if (!hydrated && !loadError) return <AppLoading label='app.loadingData' />
   if (!hydrated) return <div className='flex min-h-screen items-center justify-center bg-[var(--canvas)] px-6'><div className='w-full max-w-md border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm'><AlertTriangle size={24} className='text-[var(--warning)]' aria-hidden='true' /><h1 className='mt-4 text-xl font-semibold text-[var(--text)]'>{t('app.loadErrorTitle')}</h1><p className='mt-2 text-sm leading-6 text-[var(--text-muted)]'>{loadError}</p><div className='mt-6 flex gap-2'><Button onClick={() => void hydrate()}>{t('common.retry')}</Button><Button variant='secondary' onClick={() => void logout()}>{t('common.signOut')}</Button></div></div></div>
 
-  return <AppShell><Routes><Route path='/' element={<DashboardPage />} /><Route path='/inventory' element={<InventoryPage />} /><Route path='/outbound' element={<OutboundPage />} /><Route path='/inbound' element={<InboundPage />} /><Route path='/refill' element={<RefillPage />} /><Route path='/admin' element={user?.role === 'ADMIN' ? <AdminPage /> : <Navigate to='/' replace />} /><Route path='*' element={<Navigate to='/' replace />} /></Routes></AppShell>
+  return <AppShell><Suspense fallback={<AppLoading label='app.loadingData' />}><Routes><Route path='/' element={<DashboardPage />} /><Route path='/inventory' element={<InventoryPage />} /><Route path='/outbound' element={<OutboundPage />} /><Route path='/inbound' element={<InboundPage />} /><Route path='/refill' element={<RefillPage />} /><Route path='/admin' element={user?.role === 'ADMIN' ? <AdminPage /> : <Navigate to='/' replace />} /><Route path='*' element={<Navigate to='/' replace />} /></Routes></Suspense></AppShell>
 }
 
 function AppContent() {

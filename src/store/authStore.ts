@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { apiIsConfigured, changePassword as changePasswordRequest, getSession, login as loginRequest, logout as logoutRequest } from '../lib/api'
+import { supabaseConfigured } from '../lib/supabaseClient'
 import type { AuthSessionData, AuthUser } from '../types'
 
 type AuthStatus = 'initializing' | 'anonymous' | 'password_change' | 'authenticated'
@@ -23,7 +24,7 @@ interface AuthStore {
   clearSession: () => void
 }
 
-const storageKey = 'soh-auth-session-v1'
+const storageKey = `soh-auth-session-v2:${supabaseConfigured ? 'supabase' : 'gas'}`
 
 function readStoredSession(): StoredSession | null {
   try {

@@ -28,6 +28,9 @@ jobs:
         env:
           VITE_BASE_PATH: /soh-consignment-app/
           VITE_GAS_BRIDGE_URL: ${{ vars.GAS_BRIDGE_URL }}
+          VITE_DATA_BACKEND: supabase
+          VITE_SUPABASE_URL: https://upqqbgtvbacrayzmyjda.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_bc7Ok3dGNi8JTQ-NDs6SjQ_y3KjwG5T
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

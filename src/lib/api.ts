@@ -8,21 +8,14 @@ import type {
   OutboundTransaction,
   StockAdjustment,
 } from '../types'
+import { ApiError } from './apiError'
+import { supabaseConfigured } from './supabaseClient'
+import * as supabaseApi from './supabaseApi'
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
 const gasBridgeUrl = String(import.meta.env.VITE_GAS_BRIDGE_URL ?? '').trim()
 
-export class ApiError extends Error {
-  code: string
-  status?: number
-
-  constructor(message: string, code = 'REQUEST_FAILED', status?: number) {
-    super(message)
-    this.name = 'ApiError'
-    this.code = code
-    this.status = status
-  }
-}
+export { ApiError } from './apiError'
 
 let bridgeFrame: HTMLIFrameElement | null = null
 let bridgeWindow: Window | null = null
@@ -155,61 +148,75 @@ async function requestAction<T>(action: string, payload: unknown = {}, token?: s
 }
 
 export function apiIsConfigured() {
-  return Boolean(gasBridgeUrl || apiBase)
+  return supabaseConfigured || Boolean(gasBridgeUrl || apiBase)
 }
 
 export function login(identifier: string, password: string) {
+  if (supabaseConfigured) return supabaseApi.loginSupabase(identifier, password)
   return requestAction<{ data: AuthSessionData }>('LOGIN', { identifier, password })
 }
 
 export function getSession(token: string) {
+  if (supabaseConfigured) return supabaseApi.getSessionSupabase()
   return requestAction<{ data: { user: AuthUser; mustChangePassword: boolean; expiresAt: string } }>('SESSION', {}, token)
 }
 
 export function changePassword(token: string, payload: { currentPassword?: string; newPassword: string; confirmPassword: string }) {
+  if (supabaseConfigured) return supabaseApi.changePasswordSupabase(payload)
   return requestAction<{ data: AuthSessionData }>('CHANGE_PASSWORD', payload, token)
 }
 
 export function logout(token: string) {
+  if (supabaseConfigured) return supabaseApi.logoutSupabase()
   return requestAction<{ data: { success: boolean } }>('LOGOUT', {}, token)
 }
 
 export function getBootstrap(token: string) {
+  if (supabaseConfigured) return supabaseApi.getBootstrapSupabase()
   return requestAction<{ data: AppData; user: AuthUser }>('BOOTSTRAP', {}, token)
 }
 
 export function postOutbound(token: string, transaction: Omit<OutboundTransaction, 'id' | 'createdAt'>) {
+  if (supabaseConfigured) return supabaseApi.postOutboundSupabase(transaction)
   return requestAction<{ data: OutboundTransaction }>('OUTBOUND', transaction, token)
 }
 
 export function postInbound(token: string, transaction: Omit<InboundTransaction, 'id' | 'createdAt'>) {
+  if (supabaseConfigured) return supabaseApi.postInboundSupabase(transaction)
   return requestAction<{ data: InboundTransaction }>('INBOUND', transaction, token)
 }
 
 export function postAdjustment(token: string, adjustment: Omit<StockAdjustment, 'id' | 'createdAt'>) {
+  if (supabaseConfigured) return supabaseApi.postAdjustmentSupabase(adjustment)
   return requestAction<{ data: StockAdjustment }>('ADJUSTMENT', adjustment, token)
 }
 
 export function getAdminOverview(token: string) {
+  if (supabaseConfigured) return supabaseApi.getAdminOverviewSupabase()
   return requestAction<{ data: AdminOverview }>('ADMIN_OVERVIEW', {}, token)
 }
 
 export function adminCreateUser(token: string, payload: { username: string; email: string; displayName: string; role: AuthUser['role'] }) {
+  if (supabaseConfigured) return supabaseApi.adminCreateUserSupabase(token, payload)
   return requestAction<{ data: { user: AdminUser; temporaryPassword: string } }>('ADMIN_CREATE_USER', payload, token)
 }
 
 export function adminResetPassword(token: string, userId: string) {
+  if (supabaseConfigured) return supabaseApi.adminResetPasswordSupabase(token, userId)
   return requestAction<{ data: { user: AdminUser; temporaryPassword: string } }>('ADMIN_RESET_PASSWORD', { userId }, token)
 }
 
 export function adminSetActive(token: string, userId: string, active: boolean) {
+  if (supabaseConfigured) return supabaseApi.adminSetActiveSupabase(token, userId, active)
   return requestAction<{ data: { user: AdminUser } }>('ADMIN_SET_ACTIVE', { userId, active }, token)
 }
 
 export function adminUnlockUser(token: string, userId: string) {
+  if (supabaseConfigured) return supabaseApi.adminUnlockUserSupabase(token, userId)
   return requestAction<{ data: { user: AdminUser } }>('ADMIN_UNLOCK_USER', { userId }, token)
 }
 
 export function adminSetRole(token: string, userId: string, role: AuthUser['role']) {
+  if (supabaseConfigured) return supabaseApi.adminSetRoleSupabase(token, userId, role)
   return requestAction<{ data: { user: AdminUser } }>('ADMIN_SET_ROLE', { userId, role }, token)
 }
