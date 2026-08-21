@@ -81,7 +81,36 @@ export default function InboundPage() {
       </section>
       <section className='app-panel overflow-hidden'>
         <div className='border-b border-[var(--border)] p-4 sm:p-5'><div className='relative max-w-xl'><label htmlFor='inbound-search' className='sr-only'>{t('inbound.searchLabel')}</label><Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' /><input id='inbound-search' type='search' value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('inbound.searchPlaceholder')} className='min-h-11 w-full rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' /></div></div>
-        <div className='overflow-x-auto'><table className='data-table min-w-[820px]'><caption className='sr-only'>{t('inbound.tableCaption')}</caption><thead><tr><th scope='col'>{t('inbound.dateDocument')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col' className='text-right'>{t('inbound.documentQty')}</th><th scope='col' className='text-right'>{t('inbound.actualQty')}</th><th scope='col'>{t('inbound.grStatus')}</th><th scope='col' className='text-right'>{t('common.actions')}</th></tr></thead><tbody>{filtered.map((item) => { const difference = Math.abs(item.qtyMatdoc - item.qtyActual); return <tr key={item.id}><td><p className='font-semibold text-[var(--text)]'>{formatDate(item.receivedDate)}</p>{item.matdocNumber && <p className='mt-1 text-xs text-[var(--text-muted)]'>{item.matdocNumber}</p>}</td><td><p className='font-semibold text-[var(--text)]'>{item.partNumber}</p><p className='mt-1 max-w-[320px] truncate text-xs text-[var(--text-muted)]'>{parts.find((part) => part.partNumber === item.partNumber)?.description ?? t('inbound.partNotFound')}</p></td><td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</td><td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</td><td><StatusBadge status={item.grStatus === 'Done GR' ? 'ready' : 'neutral'}>{item.grStatus === 'Done GR' ? <><CheckCircle2 size={11} className='mr-1 inline' aria-hidden='true' />{t('common.doneGr')}</> : t('common.pending')}</StatusBadge>{difference > 0 && <p className='mt-2 text-xs text-[var(--warning)]'>{t('inbound.difference', { count: formatNumber(difference) })}</p>}</td><td className='text-right'><Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('inbound.editGr')} ${item.partNumber}`}><Pencil size={14} aria-hidden='true' />{t('inbound.editGr')}</Button></td></tr> })}{filtered.length === 0 && <tr><td colSpan={6} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</td></tr>}</tbody></table></div>
+                {/* Mobile card list ? hidden on md+ */}
+        <ul className='divide-y divide-[var(--border)] md:hidden'>
+          {filtered.map((item) => {
+            const difference = Math.abs(item.qtyMatdoc - item.qtyActual)
+            return (
+              <li key={item.id} className='p-4'>
+                <div className='flex items-start justify-between gap-3'>
+                  <div className='min-w-0'>
+                    <p className='truncate font-semibold text-[var(--text)]'>{item.partNumber}</p>
+                    <p className='mt-0.5 truncate text-xs text-[var(--text-muted)]'>{parts.find(p => p.partNumber === item.partNumber)?.description}</p>
+                    <p className='mt-1 text-[11px] text-[var(--text-subtle)]'>{formatDate(item.receivedDate)} {item.matdocNumber ? `? ${item.matdocNumber}` : ''}</p>
+                  </div>
+                  <Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('inbound.editGr')} ${item.partNumber}`}><Pencil size={14} aria-hidden='true' /></Button>
+                </div>
+                <div className='mt-3 flex items-center justify-between rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2'>
+                  <StatusBadge status={item.grStatus === 'Done GR' ? 'ready' : 'neutral'}>{item.grStatus === 'Done GR' ? <><CheckCircle2 size={11} className='mr-1 inline' aria-hidden='true' />{t('common.doneGr')}</> : t('common.pending')}</StatusBadge>
+                  <div className='text-right'>
+                    <p className='text-[10px] font-semibold uppercase tracking-wide text-[var(--text-subtle)]'>{t('inbound.actualQty')} / DOC</p>
+                    <p className='mt-0.5 text-sm font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)} <span className='text-[var(--text-muted)] font-normal'>/ {formatNumber(item.qtyMatdoc)}</span></p>
+                  </div>
+                </div>
+                {difference > 0 && <p className='mt-2 text-xs text-[var(--warning)]'>{t('inbound.difference', { count: formatNumber(difference) })}</p>}
+              </li>
+            )
+          })}
+          {filtered.length === 0 && <li className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</li>}
+        </ul>
+
+        {/* Desktop table ? hidden on <md */}
+        <div className='hidden overflow-x-auto md:block'><table className='data-table min-w-[820px]'><caption className='sr-only'>{t('inbound.tableCaption')}</caption><thead><tr><th scope='col'>{t('inbound.dateDocument')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col' className='text-right'>{t('inbound.documentQty')}</th><th scope='col' className='text-right'>{t('inbound.actualQty')}</th><th scope='col'>{t('inbound.grStatus')}</th><th scope='col' className='text-right'>{t('common.actions')}</th></tr></thead><tbody>{filtered.map((item) => { const difference = Math.abs(item.qtyMatdoc - item.qtyActual); return <tr key={item.id}><td><p className='font-semibold text-[var(--text)]'>{formatDate(item.receivedDate)}</p>{item.matdocNumber && <p className='mt-1 text-xs text-[var(--text-muted)]'>{item.matdocNumber}</p>}</td><td><p className='font-semibold text-[var(--text)]'>{item.partNumber}</p><p className='mt-1 max-w-[320px] truncate text-xs text-[var(--text-muted)]'>{parts.find((part) => part.partNumber === item.partNumber)?.description ?? t('inbound.partNotFound')}</p></td><td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</td><td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</td><td><StatusBadge status={item.grStatus === 'Done GR' ? 'ready' : 'neutral'}>{item.grStatus === 'Done GR' ? <><CheckCircle2 size={11} className='mr-1 inline' aria-hidden='true' />{t('common.doneGr')}</> : t('common.pending')}</StatusBadge>{difference > 0 && <p className='mt-2 text-xs text-[var(--warning)]'>{t('inbound.difference', { count: formatNumber(difference) })}</p>}</td><td className='text-right'><Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('inbound.editGr')} ${item.partNumber}`}><Pencil size={14} aria-hidden='true' />{t('inbound.editGr')}</Button></td></tr> })}{filtered.length === 0 && <tr><td colSpan={6} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</td></tr>}</tbody></table></div>
       </section>
 
       {/* New Inbound Modal */}

@@ -4,6 +4,7 @@ import type {
   InboundGrUpdate,
   InboundTransaction,
   OutboundTransaction,
+  OutboundUpdate,
   PartInput,
   StockAdjustmentInput,
 } from '../types'
@@ -18,6 +19,7 @@ import {
   postOutbound,
   updateInbound as updateInboundRequest,
   updateOutboundSupply as updateOutboundSupplyRequest,
+  updateOutbound as updateOutboundRequest,
   updatePart as updatePartRequest,
 } from '../lib/api'
 import { useAuthStore } from './authStore'
@@ -27,6 +29,7 @@ interface AppStore extends AppData {
   hydrated: boolean
   addOutbound: (transaction: Omit<OutboundTransaction, 'id' | 'createdAt'>) => Promise<void>
   updateOutboundSupply: (transactionId: string, qtySupply: number) => Promise<void>
+  updateOutbound: (transactionId: string, updates: OutboundUpdate) => Promise<void>
   addInbound: (transaction: Omit<InboundTransaction, 'id' | 'createdAt'>) => Promise<void>
   updateInbound: (transactionId: string, updates: InboundGrUpdate) => Promise<void>
   addAdjustment: (adjustment: StockAdjustmentInput) => Promise<void>
@@ -72,6 +75,14 @@ export const useAppStore = create<AppStore>((set) => ({
   updateOutboundSupply: async (transactionId, qtySupply) => {
     try {
       const updated = (await updateOutboundSupplyRequest(sessionToken(), transactionId, qtySupply)).data
+      set((state) => ({ outbound: state.outbound.map((transaction) => (transaction.id === transactionId ? updated : transaction)) }))
+    } catch (error) {
+      handleSessionError(error)
+    }
+  },
+  updateOutbound: async (transactionId, updates) => {
+    try {
+      const updated = (await updateOutboundRequest(sessionToken(), transactionId, updates)).data
       set((state) => ({ outbound: state.outbound.map((transaction) => (transaction.id === transactionId ? updated : transaction)) }))
     } catch (error) {
       handleSessionError(error)

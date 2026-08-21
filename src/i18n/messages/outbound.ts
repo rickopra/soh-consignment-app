@@ -39,6 +39,9 @@ export const outboundMessages = {
     'outbound.validation': 'Lengkapi peminta, part, dan jumlah dengan benar. Jumlah diserahkan tidak boleh melebihi jumlah diminta.',
     'outbound.documentValidation': 'Isi minimal satu nomor dokumen untuk Consignment atau Service Point.',
     'outbound.saveFailed': 'Transaksi barang keluar gagal disimpan.',
+    'outbound.editTitle': 'Edit transaksi barang keluar',
+    'outbound.editDescription': 'Perbarui jumlah, dokumen, dan catatan transaksi. Outstanding dihitung otomatis.',
+    'outbound.editSaved': 'Transaksi barang keluar diperbarui',
   },
   en: {
     'outbound.title': 'Outbound',
@@ -80,5 +83,8 @@ export const outboundMessages = {
     'outbound.validation': 'Complete the requester, part, and quantities. Supplied quantity cannot exceed requested quantity.',
     'outbound.documentValidation': 'Enter at least one document number for Consignment or Service Point.',
     'outbound.saveFailed': 'Unable to save the outbound transaction.',
+    'outbound.editTitle': 'Edit outbound transaction',
+    'outbound.editDescription': 'Update quantities, documents, and notes. Outstanding is calculated automatically.',
+    'outbound.editSaved': 'Outbound transaction updated',
   },
 } as const

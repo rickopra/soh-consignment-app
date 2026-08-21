@@ -3,6 +3,7 @@ import type {
   InboundGrUpdate,
   InboundTransaction,
   OutboundTransaction,
+  OutboundUpdate,
   Part,
   PartInput,
   StockAdjustmentInput,
@@ -48,6 +49,11 @@ export function postOutbound(token: string, transaction: Omit<OutboundTransactio
 export function updateOutboundSupply(token: string, transactionId: string, qtySupply: number) {
   void token
   return supabaseApi.updateOutboundSupplySupabase(transactionId, qtySupply)
+}
+
+export function updateOutbound(token: string, transactionId: string, updates: OutboundUpdate) {
+  void token
+  return supabaseApi.updateOutboundSupabase(transactionId, updates)
 }
 
 export function postInbound(token: string, transaction: Omit<InboundTransaction, 'id' | 'createdAt'>) {

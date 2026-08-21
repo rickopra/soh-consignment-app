@@ -50,6 +50,14 @@ export interface OutboundTransaction {
   createdAt: string
 }
 
+
+export interface OutboundUpdate {
+  qtyRequest: number
+  qtySupply: number
+  documents: OutboundDocuments
+  notes: string
+}
+
 export interface InboundTransaction {
   id: string
   receivedDate: string

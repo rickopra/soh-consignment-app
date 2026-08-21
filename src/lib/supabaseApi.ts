@@ -6,6 +6,7 @@ import type {
   AuthUser,
   InboundTransaction,
   OutboundTransaction,
+  OutboundUpdate,
   StockAdjustment,
   StockAdjustmentInput,
   UserRole,
@@ -280,6 +281,20 @@ export async function updateOutboundSupplySupabase(transactionId: string, qtySup
   })
   throwDatabaseError(error, 'Jumlah supply tidak dapat diperbarui.')
   if (!data) throw new ApiError('Jumlah supply tidak dapat diperbarui.', 'UPDATE_FAILED')
+  return { data: mapOutbound(data as Record<string, any>) }
+}
+
+export async function updateOutboundSupabase(transactionId: string, updates: OutboundUpdate) {
+  const client = requireClient()
+  const { data, error } = await client.rpc('update_outbound_transaction', {
+    p_transaction_id: transactionId,
+    p_qty_request: updates.qtyRequest,
+    p_qty_supply: updates.qtySupply,
+    p_documents: updates.documents,
+    p_notes: updates.notes,
+  })
+  throwDatabaseError(error, 'Transaksi outbound tidak dapat diperbarui.')
+  if (!data) throw new ApiError('Transaksi outbound tidak dapat diperbarui.', 'UPDATE_FAILED')
   return { data: mapOutbound(data as Record<string, any>) }
 }
 
