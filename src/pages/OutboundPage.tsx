@@ -61,6 +61,7 @@ export default function OutboundPage() {
   const submitEdit = async () => {
     if (!editTarget) return
     if (!Number.isInteger(editDraft.qtyRequest) || !Number.isInteger(editDraft.qtySupply) || editDraft.qtyRequest < 1 || editDraft.qtySupply < 0 || editDraft.qtySupply > editDraft.qtyRequest) { setEditError(t('outbound.validation')); return }
+    if (editTarget.warehouseType !== 'Warehouse Store' && !Object.values(editDraft.documents).some(Boolean)) { setEditError(t('outbound.documentValidation')); return }
     setEditSaving(true); setEditError('')
     try {
       await updateOutbound(editTarget.id, editDraft); closeEdit()
