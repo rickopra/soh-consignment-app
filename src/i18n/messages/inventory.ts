@@ -47,6 +47,11 @@ export const inventoryMessages = {
     'inventory.adjustStock': 'Penyesuaian stok',
     'inventory.adjustStockDescription': 'Catat jumlah stok fisik aktual. Selisih dengan stok buku akan tersimpan sebagai penyesuaian.',
     'inventory.adjustmentSaved': 'Penyesuaian berhasil disimpan',
+    'inventory.recordedStock': 'SOH tercatat',
+    'inventory.actualCount': 'Jumlah fisik aktual',
+    'inventory.variance': 'Selisih',
+    'inventory.adjustmentReason': 'Alasan penyesuaian',
+    'inventory.adjustmentReasonRequired': 'Alasan penyesuaian wajib diisi.',
   },
   en: {
     'inventory.title': 'SOH inventory',
@@ -96,5 +101,10 @@ export const inventoryMessages = {
     'inventory.adjustStock': 'Adjust stock',
     'inventory.adjustStockDescription': 'Record the physical stock count. The difference from book stock will be recorded as an adjustment.',
     'inventory.adjustmentSaved': 'Stock adjustment saved',
+    'inventory.recordedStock': 'Recorded SOH',
+    'inventory.actualCount': 'Actual physical count',
+    'inventory.variance': 'Variance',
+    'inventory.adjustmentReason': 'Adjustment reason',
+    'inventory.adjustmentReasonRequired': 'Adjustment reason is required.',
   },
 } as const

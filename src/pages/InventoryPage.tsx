@@ -4,7 +4,7 @@ import { useToast } from '../components/toast'
 import { Button, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextField } from '../components/ui'
 import { useLanguage } from '../i18n/useLanguage'
 import { localizedError } from '../lib/localizedError'
-import { calculateInventory, downloadCsv } from '../lib/utils'
+import { calculateInventory, downloadCsv, todayIso } from '../lib/utils'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
 import type { Part, WarehouseType } from '../types'
@@ -115,19 +115,21 @@ export default function InventoryPage() {
     }
   }
 
-  const openAdjustment = () => { setAdjDraft({ partNumber: activeParts[0]?.partNumber ?? '', physicalCount: 0, reason: '' }); setAdjError(''); setAdjOpen(true) }
+  const openAdjustment = () => { const first = inventory[0]; setAdjDraft({ partNumber: first?.partNumber ?? '', physicalCount: first?.physicalStock ?? 0, reason: '' }); setAdjError(''); setAdjOpen(true) }
+  const selectAdjustmentPart = (partNumber: string) => { const selected = inventory.find((item) => item.partNumber === partNumber); setAdjDraft((current) => ({ ...current, partNumber, physicalCount: selected?.physicalStock ?? 0 })) }
+  const selectedAdjustmentPart = inventory.find((item) => item.partNumber === adjDraft.partNumber)
 
   const submitAdjustment = async () => {
     const part = activeParts.find(p => p.partNumber === adjDraft.partNumber)
     if (!part) { setAdjError(t('inbound.partNotFound')); return }
     if (adjDraft.physicalCount < 0) { setAdjError(t('inventory.validationStock')); return }
-    if (!adjDraft.reason.trim()) { setAdjError(t('inventory.validationRequired')); return }
+    if (!adjDraft.reason.trim()) { setAdjError(t('inventory.adjustmentReasonRequired')); return }
     setAdjSaving(true)
     setAdjError('')
     try {
       const currentInv = inventory.find(i => i.partNumber === part.partNumber)
       const previousBookStock = currentInv ? currentInv.physicalStock : 0
-      await addAdjustment({ adjustmentDate: new Date().toISOString().split('T')[0], partNumber: part.partNumber, previousBookStock, physicalCount: adjDraft.physicalCount, reason: adjDraft.reason.trim(), createdBy: '' })
+      await addAdjustment({ adjustmentDate: todayIso(), partNumber: part.partNumber, previousBookStock, physicalCount: adjDraft.physicalCount, reason: adjDraft.reason.trim(), createdBy: '' })
       push({ tone: 'success', title: t('inventory.adjustmentSaved'), description: part.partNumber })
       setAdjOpen(false)
     } catch(err) {
@@ -186,7 +188,7 @@ export default function InventoryPage() {
         action={
           <div className='flex gap-2'>
             {isAdmin && <Button onClick={openAdd}><Plus size={16} aria-hidden='true' />{t('inventory.addPart')}</Button>}
-            {isAdmin && <Button variant='secondary' onClick={openAdjustment}><FileDiff size={16} aria-hidden='true' />{t('inventory.adjustStock')}</Button>}
+            {isAdmin && <Button variant='secondary' onClick={openAdjustment} disabled={!inventory.length}><FileDiff size={16} aria-hidden='true' />{t('inventory.adjustStock')}</Button>}
             <Button variant='secondary' onClick={exportInventory} disabled={!filtered.length}><Download size={16} aria-hidden='true' />{t('inventory.export')}</Button>
           </div>
         }
@@ -202,9 +204,10 @@ export default function InventoryPage() {
       {/* Adjustment Modal */}
       <Modal open={adjOpen} onClose={() => setAdjOpen(false)} title={t('inventory.adjustStock')} description={t('inventory.adjustStockDescription')} size='md'>
         <div className='space-y-4'>
-          <SelectField id='adj-part' label={t('common.partNumber')} value={adjDraft.partNumber} onChange={(value) => setAdjDraft((current) => ({ ...current, partNumber: value }))} options={activeParts.map(p => ({ value: p.partNumber, label: `${p.partNumber} | ${p.description.slice(0, 34)}` }))} required />
-          <NumberField id='adj-qty' label={t('inventory.physicalStock')} value={adjDraft.physicalCount} onChange={(value) => setAdjDraft((current) => ({ ...current, physicalCount: value }))} min={0} required />
-          <TextField id='adj-reason' label={t('inbound.notes')} value={adjDraft.reason} onChange={(value) => setAdjDraft((current) => ({ ...current, reason: value }))} required />
+          <SelectField id='adj-part' label={t('common.partNumber')} value={adjDraft.partNumber} onChange={selectAdjustmentPart} options={activeParts.map(p => ({ value: p.partNumber, label: `${p.partNumber} | ${p.description.slice(0, 34)}` }))} required />
+          {selectedAdjustmentPart && <div className='grid grid-cols-2 gap-3 rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] p-4'><div><p className='text-xs text-[var(--text-muted)]'>{t('inventory.recordedStock')}</p><p className='mt-1 text-xl font-semibold text-[var(--text)]'>{formatNumber(selectedAdjustmentPart.physicalStock)}</p></div><div><p className='text-xs text-[var(--text-muted)]'>{t('inventory.variance')}</p><p className={`mt-1 text-xl font-semibold ${adjDraft.physicalCount - selectedAdjustmentPart.physicalStock === 0 ? 'text-[var(--text-muted)]' : 'text-[var(--brand-blue)]'}`}>{adjDraft.physicalCount - selectedAdjustmentPart.physicalStock > 0 ? '+' : ''}{formatNumber(adjDraft.physicalCount - selectedAdjustmentPart.physicalStock)}</p></div></div>}
+          <NumberField id='adj-qty' label={t('inventory.actualCount')} value={adjDraft.physicalCount} onChange={(value) => setAdjDraft((current) => ({ ...current, physicalCount: value }))} min={0} required />
+          <TextField id='adj-reason' label={t('inventory.adjustmentReason')} value={adjDraft.reason} onChange={(value) => setAdjDraft((current) => ({ ...current, reason: value }))} required />
           {adjError && <p role='alert' className='border-l-4 border-[#a33945] bg-[#f8e9eb] px-4 py-3 text-sm leading-6 text-[#7f2834]'>{adjError}</p>}
           <div className='flex justify-end gap-2 border-t border-[var(--border)] pt-4'><Button variant='secondary' onClick={() => setAdjOpen(false)} disabled={adjSaving}>{t('common.cancel')}</Button><Button onClick={() => void submitAdjustment()} disabled={adjSaving}>{adjSaving ? t('common.saving') : t('common.save')}</Button></div>
         </div>
