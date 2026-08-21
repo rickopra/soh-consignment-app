@@ -270,6 +270,17 @@ export async function postOutboundSupabase(transaction: Omit<OutboundTransaction
   return { data: mapOutbound(data) }
 }
 
+export async function updateOutboundSupplySupabase(transactionId: string, qtySupply: number) {
+  const client = requireClient()
+  const { data, error } = await client.rpc('update_outbound_supply', {
+    p_transaction_id: transactionId,
+    p_qty_supply: qtySupply,
+  })
+  throwDatabaseError(error, 'Jumlah supply tidak dapat diperbarui.')
+  if (!data) throw new ApiError('Jumlah supply tidak dapat diperbarui.', 'UPDATE_FAILED')
+  return { data: mapOutbound(data as Record<string, any>) }
+}
+
 export async function postInboundSupabase(transaction: Omit<InboundTransaction, 'id' | 'createdAt'>) {
   const client = requireClient()
   const { data: userData } = await client.auth.getUser()

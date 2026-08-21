@@ -42,6 +42,11 @@ export function postOutbound(token: string, transaction: Omit<OutboundTransactio
   return supabaseApi.postOutboundSupabase(transaction)
 }
 
+export function updateOutboundSupply(token: string, transactionId: string, qtySupply: number) {
+  void token
+  return supabaseApi.updateOutboundSupplySupabase(transactionId, qtySupply)
+}
+
 export function postInbound(token: string, transaction: Omit<InboundTransaction, 'id' | 'createdAt'>) {
   void token
   return supabaseApi.postInboundSupabase(transaction)

@@ -7,13 +7,14 @@ import type {
   StockAdjustment,
 } from '../types'
 import { todayIso } from '../lib/utils'
-import { ApiError, getBootstrap, postAdjustment, postInbound, postOutbound } from '../lib/api'
+import { ApiError, getBootstrap, postAdjustment, postInbound, postOutbound, updateOutboundSupply as updateOutboundSupplyRequest } from '../lib/api'
 import { useAuthStore } from './authStore'
 
 interface AppStore extends AppData {
   dataMode: 'loading' | 'connected'
   hydrated: boolean
   addOutbound: (transaction: Omit<OutboundTransaction, 'id' | 'createdAt'>) => Promise<void>
+  updateOutboundSupply: (transactionId: string, qtySupply: number) => Promise<void>
   addInbound: (transaction: Omit<InboundTransaction, 'id' | 'createdAt'>) => Promise<void>
   addAdjustment: (adjustment: Omit<StockAdjustment, 'id' | 'createdAt'>) => Promise<void>
   updatePart: (id: string, updates: Partial<Part>) => void
@@ -53,6 +54,14 @@ export const useAppStore = create<AppStore>((set) => ({
       handleSessionError(error)
     }
   },
+  updateOutboundSupply: async (transactionId, qtySupply) => {
+    try {
+      const updated = (await updateOutboundSupplyRequest(sessionToken(), transactionId, qtySupply)).data
+      set((state) => ({ outbound: state.outbound.map((transaction) => (transaction.id === transactionId ? updated : transaction)) }))
+    } catch (error) {
+      handleSessionError(error)
+    }
+  },
   addInbound: async (transaction) => {
     try {
       const saved = (await postInbound(sessionToken(), transaction)).data
@@ -87,7 +96,7 @@ export const defaultOutboundDraft = {
   requester: '',
   partNumber: '',
   qtyRequest: 1,
-  qtySupply: 1,
+  qtySupply: 0,
   warehouseType: 'Consignment' as import('../types').WarehouseType,
   documents: { pr: '', po: '', so: '', dn: '', invoice: '' },
   notes: '',
