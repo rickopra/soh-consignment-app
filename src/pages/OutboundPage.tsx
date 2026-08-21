@@ -49,7 +49,7 @@ export default function OutboundPage() {
   const closeEdit = () => { setEditTarget(null); setEditError('') }
 
   const submit = async () => {
-    if (!draft.requester.trim() || !draft.partNumber || draft.qtyRequest < 1 || draft.qtySupply < 0 || draft.qtySupply > draft.qtyRequest) { setError(t('outbound.validation')); return }
+    if (!draft.requester.trim() || !draft.partNumber || !Number.isInteger(draft.qtyRequest) || !Number.isInteger(draft.qtySupply) || draft.qtyRequest < 1 || draft.qtySupply < 0 || draft.qtySupply > draft.qtyRequest) { setError(t('outbound.validation')); return }
     if (needsDocuments && !Object.values(draft.documents).some(Boolean)) { setError(t('outbound.documentValidation')); return }
     setSaving(true); setError('')
     try {
@@ -60,7 +60,7 @@ export default function OutboundPage() {
 
   const submitEdit = async () => {
     if (!editTarget) return
-    if (editDraft.qtyRequest < 1 || editDraft.qtySupply < 0 || editDraft.qtySupply > editDraft.qtyRequest) { setEditError(t('outbound.validation')); return }
+    if (!Number.isInteger(editDraft.qtyRequest) || !Number.isInteger(editDraft.qtySupply) || editDraft.qtyRequest < 1 || editDraft.qtySupply < 0 || editDraft.qtySupply > editDraft.qtyRequest) { setEditError(t('outbound.validation')); return }
     setEditSaving(true); setEditError('')
     try {
       await updateOutbound(editTarget.id, editDraft); closeEdit()
@@ -169,14 +169,14 @@ export default function OutboundPage() {
             </div>
 
             {/* Qty summary */}
-            <div className='grid grid-cols-3 divide-x divide-[var(--border)] rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] text-center'>
+            <div aria-live='polite' className='grid grid-cols-3 divide-x divide-[var(--border)] rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] text-center'>
               <div className='py-3 px-2'><p className='text-[10px] font-semibold uppercase tracking-wide text-[var(--text-subtle)]'>{t('outbound.requestQty')}</p><p className='mt-1 text-lg font-semibold text-[var(--text)]'>{formatNumber(editDraft.qtyRequest)}</p></div>
               <div className='py-3 px-2'><p className='text-[10px] font-semibold uppercase tracking-wide text-[var(--text-subtle)]'>{t('outbound.supplyQty')}</p><p className='mt-1 text-lg font-semibold text-[var(--text)]'>{formatNumber(editDraft.qtySupply)}</p></div>
               <div className='py-3 px-2'><p className='text-[10px] font-semibold uppercase tracking-wide text-[var(--text-subtle)]'>O/S</p><p className={`mt-1 text-lg font-semibold ${editOutstanding > 0 ? 'text-[var(--warning)]' : 'text-[var(--success)]'}`}>{formatNumber(editOutstanding)}</p></div>
             </div>
 
             <div className='grid gap-4 sm:grid-cols-2'>
-              <NumberField id='edit-request-qty' label={t('outbound.requestQty')} value={editDraft.qtyRequest} onChange={(value) => setEditDraft((current) => ({ ...current, qtyRequest: value, qtySupply: Math.min(current.qtySupply, value) }))} min={1} required />
+              <NumberField id='edit-request-qty' label={t('outbound.requestQty')} value={editDraft.qtyRequest} onChange={(value) => setEditDraft((current) => ({ ...current, qtyRequest: value }))} min={1} required />
               <NumberField id='edit-supply-qty' label={t('outbound.supplyQty')} value={editDraft.qtySupply} onChange={(value) => setEditDraft((current) => ({ ...current, qtySupply: value }))} min={0} max={editDraft.qtyRequest} required />
             </div>
             <fieldset className='border-t border-[var(--border)] pt-5'><legend className='text-sm font-semibold text-[var(--text)]'>{t('outbound.documents')}</legend><div className='mt-4 grid gap-4 sm:grid-cols-2'><TextField id='edit-pr' label='No. PR' value={editDraft.documents.pr} onChange={(value) => updateEditDocument('pr', value)} hint={t('common.optional')} /><TextField id='edit-po' label='No. PO' value={editDraft.documents.po} onChange={(value) => updateEditDocument('po', value)} hint={t('common.optional')} /><TextField id='edit-so' label='No. SO' value={editDraft.documents.so} onChange={(value) => updateEditDocument('so', value)} hint={t('common.optional')} /><TextField id='edit-dn' label='No. DN' value={editDraft.documents.dn} onChange={(value) => updateEditDocument('dn', value)} hint={t('common.optional')} /><TextField id='edit-invoice' label='No. Invoice' value={editDraft.documents.invoice} onChange={(value) => updateEditDocument('invoice', value)} hint={t('common.optional')} /></div></fieldset>
