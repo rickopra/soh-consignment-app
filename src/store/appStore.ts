@@ -1,13 +1,25 @@
 import { create } from 'zustand'
 import type {
   AppData,
+  InboundGrUpdate,
   InboundTransaction,
   OutboundTransaction,
-  Part,
-  StockAdjustment,
+  PartInput,
+  StockAdjustmentInput,
 } from '../types'
 import { todayIso } from '../lib/utils'
-import { ApiError, getBootstrap, postAdjustment, postInbound, postOutbound, updateOutboundSupply as updateOutboundSupplyRequest } from '../lib/api'
+import {
+  ApiError,
+  createPart as createPartRequest,
+  deactivatePart as deactivatePartRequest,
+  getBootstrap,
+  postAdjustment,
+  postInbound,
+  postOutbound,
+  updateInbound as updateInboundRequest,
+  updateOutboundSupply as updateOutboundSupplyRequest,
+  updatePart as updatePartRequest,
+} from '../lib/api'
 import { useAuthStore } from './authStore'
 
 interface AppStore extends AppData {
@@ -16,8 +28,11 @@ interface AppStore extends AppData {
   addOutbound: (transaction: Omit<OutboundTransaction, 'id' | 'createdAt'>) => Promise<void>
   updateOutboundSupply: (transactionId: string, qtySupply: number) => Promise<void>
   addInbound: (transaction: Omit<InboundTransaction, 'id' | 'createdAt'>) => Promise<void>
-  addAdjustment: (adjustment: Omit<StockAdjustment, 'id' | 'createdAt'>) => Promise<void>
-  updatePart: (id: string, updates: Partial<Part>) => void
+  updateInbound: (transactionId: string, updates: InboundGrUpdate) => Promise<void>
+  addAdjustment: (adjustment: StockAdjustmentInput) => Promise<void>
+  createPart: (part: PartInput) => Promise<void>
+  updatePart: (id: string, part: PartInput) => Promise<void>
+  deactivatePart: (id: string) => Promise<void>
   hydrateFromApi: () => Promise<void>
   clearData: () => void
 }
@@ -70,6 +85,14 @@ export const useAppStore = create<AppStore>((set) => ({
       handleSessionError(error)
     }
   },
+  updateInbound: async (transactionId, updates) => {
+    try {
+      const updated = (await updateInboundRequest(sessionToken(), transactionId, updates)).data
+      set((state) => ({ inbound: state.inbound.map((item) => (item.id === transactionId ? updated : item)) }))
+    } catch (error) {
+      handleSessionError(error)
+    }
+  },
   addAdjustment: async (adjustment) => {
     try {
       const saved = (await postAdjustment(sessionToken(), adjustment)).data
@@ -78,7 +101,30 @@ export const useAppStore = create<AppStore>((set) => ({
       handleSessionError(error)
     }
   },
-  updatePart: (id, updates) => set((state) => ({ parts: state.parts.map((part) => (part.id === id ? { ...part, ...updates } : part)) })),
+  createPart: async (part) => {
+    try {
+      const saved = (await createPartRequest(sessionToken(), part)).data
+      set((state) => ({ parts: [saved, ...state.parts] }))
+    } catch (error) {
+      handleSessionError(error)
+    }
+  },
+  updatePart: async (id, part) => {
+    try {
+      const updated = (await updatePartRequest(sessionToken(), id, part)).data
+      set((state) => ({ parts: state.parts.map((item) => (item.id === id ? updated : item)) }))
+    } catch (error) {
+      handleSessionError(error)
+    }
+  },
+  deactivatePart: async (id) => {
+    try {
+      const updated = (await deactivatePartRequest(sessionToken(), id)).data
+      set((state) => ({ parts: state.parts.map((item) => (item.id === id ? updated : item)) }))
+    } catch (error) {
+      handleSessionError(error)
+    }
+  },
   hydrateFromApi: async () => {
     set({ dataMode: 'loading', hydrated: false })
     try {

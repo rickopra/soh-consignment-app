@@ -32,6 +32,11 @@ export const inboundMessages = {
     'inbound.savedDescription': '{{part}} dicatat sebanyak {{qty}} unit.',
     'inbound.validation': 'Lengkapi part dan jumlah penerimaan dengan benar.',
     'inbound.saveFailed': 'Transaksi barang masuk gagal disimpan.',
+    'inbound.editGr': 'Perbarui GR',
+    'inbound.editGrTitle': 'Perbarui status GR',
+    'inbound.editGrDescription': 'Ubah status GR dan jumlah aktual yang diterima.',
+    'inbound.saveGr': 'Simpan perubahan',
+    'inbound.grUpdated': 'Status GR berhasil diperbarui',
   },
   en: {
     'inbound.title': 'Inbound',
@@ -66,5 +71,10 @@ export const inboundMessages = {
     'inbound.savedDescription': '{{part}} recorded for {{qty}} units.',
     'inbound.validation': 'Complete the part and receipt quantities.',
     'inbound.saveFailed': 'Unable to save the inbound transaction.',
+    'inbound.editGr': 'Update GR',
+    'inbound.editGrTitle': 'Update GR status',
+    'inbound.editGrDescription': 'Change GR status and actual quantity received.',
+    'inbound.saveGr': 'Save changes',
+    'inbound.grUpdated': 'GR status updated',
   },
 } as const

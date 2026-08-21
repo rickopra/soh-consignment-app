@@ -7,6 +7,7 @@ import type {
   InboundTransaction,
   OutboundTransaction,
   StockAdjustment,
+  StockAdjustmentInput,
   UserRole,
 } from '../types'
 import { ApiError } from './apiError'
@@ -167,6 +168,7 @@ function mapPart(row: Record<string, any>) {
     replacementPartNumber: row.replacement_part_number,
     description: row.description,
     location: row.location,
+    model: row.model || '',
     warehouseType: row.warehouse_type,
     minStock: row.min_stock,
     maxStock: row.max_stock,
@@ -231,7 +233,7 @@ export async function getBootstrapSupabase() {
   const session = await getCurrentSession()
   const profile = await getProfile(session.user.id)
   const [parts, outbound, inbound, adjustments] = await Promise.all([
-    client.from('parts').select('*').eq('active', true).order('part_number'),
+    client.from('parts').select('*').order('part_number'),
     client.from('outbound_transactions').select('*').order('request_date', { ascending: false }),
     client.from('inbound_transactions').select('*').order('received_date', { ascending: false }),
     client.from('stock_adjustments').select('*').order('adjustment_date', { ascending: false }),
@@ -304,7 +306,7 @@ export async function postInboundSupabase(transaction: Omit<InboundTransaction, 
   return { data: mapInbound(data) }
 }
 
-export async function postAdjustmentSupabase(adjustment: Omit<StockAdjustment, 'id' | 'createdAt'>) {
+export async function postAdjustmentSupabase(adjustment: StockAdjustmentInput) {
   const client = requireClient()
   const { data: userData } = await client.auth.getUser()
   if (!userData.user) throw new ApiError('Sesi tidak tersedia.', 'SESSION_REQUIRED')
@@ -393,4 +395,66 @@ export function adminUnlockUserSupabase(token: string, userId: string) {
 export function adminSetRoleSupabase(token: string, userId: string, role: UserRole) {
   void token
   return callAdminRpc<AdminUser>('admin_set_role', { p_user_id: userId, p_role: role })
+}
+
+
+export async function createPartSupabase(part: Omit<import('../types').Part, 'id' | 'warehouseStock'>) {
+  const client = requireClient()
+  const { data, error } = await client.rpc('create_part', {
+    p_part_number: part.partNumber,
+    p_model: part.model || '',
+    p_replacement_part_number: part.replacementPartNumber || '',
+    p_description: part.description,
+    p_location: part.location,
+    p_warehouse_type: part.warehouseType,
+    p_min_stock: part.minStock,
+    p_max_stock: part.maxStock,
+    p_opening_stock: part.openingStock,
+    p_opening_stock_date: part.openingStockDate || null,
+  })
+  throwDatabaseError(error, 'Part tidak dapat dibuat.')
+  if (!data) throw new ApiError('Part tidak dapat dibuat.', 'SAVE_FAILED')
+  return { data: mapPart(data as Record<string, any>) }
+}
+
+export async function updatePartSupabase(id: string, part: Omit<import('../types').Part, 'id' | 'warehouseStock'>) {
+  const client = requireClient()
+  const { data, error } = await client.rpc('update_part', {
+    p_id: id,
+    p_part_number: part.partNumber,
+    p_model: part.model || '',
+    p_replacement_part_number: part.replacementPartNumber || '',
+    p_description: part.description,
+    p_location: part.location,
+    p_warehouse_type: part.warehouseType,
+    p_min_stock: part.minStock,
+    p_max_stock: part.maxStock,
+    p_opening_stock: part.openingStock,
+    p_opening_stock_date: part.openingStockDate || null,
+  })
+  throwDatabaseError(error, 'Part tidak dapat diperbarui.')
+  if (!data) throw new ApiError('Part tidak dapat diperbarui.', 'UPDATE_FAILED')
+  return { data: mapPart(data as Record<string, any>) }
+}
+
+export async function deactivatePartSupabase(id: string) {
+  const client = requireClient()
+  const { data, error } = await client.rpc('deactivate_part', { p_id: id })
+  throwDatabaseError(error, 'Part tidak dapat dihapus.')
+  if (!data) throw new ApiError('Part tidak dapat dihapus.', 'UPDATE_FAILED')
+  return { data: mapPart(data as Record<string, any>) }
+}
+
+export async function updateInboundGrSupabase(transactionId: string, updates: import('../types').InboundGrUpdate) {
+  const client = requireClient()
+  const { data, error } = await client.rpc('update_inbound_gr', {
+    p_transaction_id: transactionId,
+    p_gr_status: updates.grStatus,
+    p_qty_actual: updates.qtyActual ?? null,
+    p_qty_matdoc: updates.qtyMatdoc ?? null,
+    p_matdoc_number: updates.matdocNumber ?? null,
+  })
+  throwDatabaseError(error, 'Status penerimaan tidak dapat diperbarui.')
+  if (!data) throw new ApiError('Status penerimaan tidak dapat diperbarui.', 'UPDATE_FAILED')
+  return { data: mapInbound(data as Record<string, any>) }
 }

@@ -16,6 +16,7 @@ const warehouseOptions: Array<{ value: WarehouseType; label: string }> = [
 export default function OutboundPage() {
   const { language, t, formatDate, formatNumber } = useLanguage()
   const { parts, outbound, addOutbound, updateOutboundSupply } = useAppStore()
+  const activeParts = parts.filter((part) => part.active)
   const { push } = useToast()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -35,7 +36,7 @@ export default function OutboundPage() {
 
   const updateDocument = (key: keyof OutboundDocuments, value: string) => setDraft((current) => ({ ...current, documents: { ...current.documents, [key]: value } }))
   const closeModal = () => { setOpen(false); setError('') }
-  const openModal = () => { setDraft({ ...defaultOutboundDraft, partNumber: parts[0]?.partNumber ?? '' }); setError(''); setOpen(true) }
+  const openModal = () => { setDraft({ ...defaultOutboundDraft, partNumber: activeParts[0]?.partNumber ?? '' }); setError(''); setOpen(true) }
   const openSupplyEditor = (transaction: OutboundTransaction) => {
     setSupplyEdit(transaction)
     setSupplyQty(transaction.qtySupply)
@@ -87,7 +88,7 @@ export default function OutboundPage() {
 
   return (
     <div className='operational-view'>
-      <SectionHeader title={t('outbound.title')} description={t('outbound.description')} action={<Button onClick={openModal} disabled={!parts.length}><Plus size={17} aria-hidden='true' />{t('outbound.new')}</Button>} />
+      <SectionHeader title={t('outbound.title')} description={t('outbound.description')} action={<Button onClick={openModal} disabled={!activeParts.length}><Plus size={17} aria-hidden='true' />{t('outbound.new')}</Button>} />
 
       <section className='app-panel mb-6 grid overflow-hidden sm:grid-cols-2 xl:grid-cols-4' aria-label={t('outbound.title')}>
         {metrics.map((metric, index) => <div key={metric.label} className={`min-h-[104px] p-5 ${index < metrics.length - 1 ? 'border-b border-[var(--border)] sm:border-r xl:border-b-0' : ''}`}><p className='text-xs font-medium text-[var(--text-muted)]'>{metric.label}</p><p className={`mt-3 text-2xl font-semibold ${metric.emphasis ? 'text-[var(--danger)]' : 'text-[var(--text)]'}`}>{formatNumber(metric.value)}</p></div>)}
@@ -123,7 +124,7 @@ export default function OutboundPage() {
           <div className='grid gap-4 sm:grid-cols-2'>
             <TextField id='outbound-date' label={t('outbound.requestDate')} type='date' value={draft.requestDate} onChange={(value) => setDraft((current) => ({ ...current, requestDate: value }))} required />
             <TextField id='outbound-requester' label={t('outbound.requester')} value={draft.requester} onChange={(value) => setDraft((current) => ({ ...current, requester: value }))} placeholder={t('outbound.requesterPlaceholder')} required />
-            <SelectField id='outbound-part' label={t('common.partNumber')} value={draft.partNumber} onChange={(value) => setDraft((current) => ({ ...current, partNumber: value }))} options={parts.map((part) => ({ value: part.partNumber, label: `${part.partNumber} | ${part.description.slice(0, 34)}` }))} required />
+            <SelectField id='outbound-part' label={t('common.partNumber')} value={draft.partNumber} onChange={(value) => setDraft((current) => ({ ...current, partNumber: value }))} options={activeParts.map((part) => ({ value: part.partNumber, label: `${part.partNumber} | ${part.description.slice(0, 34)}` }))} required />
             <SelectField id='outbound-warehouse' label={t('outbound.warehouseType')} value={draft.warehouseType} onChange={(value) => setDraft((current) => ({ ...current, warehouseType: value as WarehouseType }))} options={warehouseOptions} required />
             <NumberField id='outbound-request-qty' label={t('outbound.requestQty')} value={draft.qtyRequest} onChange={(value) => setDraft((current) => ({ ...current, qtyRequest: value, qtySupply: Math.min(current.qtySupply, value) }))} min={1} required />
             <NumberField id='outbound-supply-qty' label={t('outbound.supplyQty')} value={draft.qtySupply} onChange={(value) => setDraft((current) => ({ ...current, qtySupply: value }))} min={0} max={draft.qtyRequest} required />

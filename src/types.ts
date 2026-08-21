@@ -1,4 +1,4 @@
-﻿export type WarehouseType = 'Consignment' | 'Service Point' | 'Warehouse Store'
+export type WarehouseType = 'Consignment' | 'Service Point' | 'Warehouse Store'
 export type StockStatus = 'READY' | 'NOT_READY'
 export type GrStatus = 'Pending' | 'Done GR'
 export type UserRole = 'ADMIN' | 'OPERATOR'
@@ -9,6 +9,7 @@ export interface Part {
   replacementPartNumber: string
   description: string
   location: string
+  model: string
   warehouseType: WarehouseType
   minStock: number
   maxStock: number
@@ -18,6 +19,15 @@ export interface Part {
   active: boolean
 }
 
+export type PartInput = Omit<Part, 'id' | 'warehouseStock'>
+export type StockAdjustmentInput = Omit<StockAdjustment, 'id' | 'createdAt' | 'variance'>
+
+export interface InboundGrUpdate {
+  grStatus: GrStatus
+  qtyActual: number
+  qtyMatdoc: number
+  matdocNumber: string
+}
 export interface OutboundDocuments {
   pr: string
   po: string

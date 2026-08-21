@@ -1,8 +1,11 @@
 import type {
   AuthUser,
+  InboundGrUpdate,
   InboundTransaction,
   OutboundTransaction,
-  StockAdjustment,
+  Part,
+  PartInput,
+  StockAdjustmentInput,
 } from '../types'
 import { supabaseConfigured } from './supabaseClient'
 import * as supabaseApi from './supabaseApi'
@@ -52,9 +55,29 @@ export function postInbound(token: string, transaction: Omit<InboundTransaction,
   return supabaseApi.postInboundSupabase(transaction)
 }
 
-export function postAdjustment(token: string, adjustment: Omit<StockAdjustment, 'id' | 'createdAt'>) {
+export function updateInbound(token: string, transactionId: string, updates: InboundGrUpdate) {
+  void token
+  return supabaseApi.updateInboundGrSupabase(transactionId, updates)
+}
+
+export function postAdjustment(token: string, adjustment: StockAdjustmentInput) {
   void token
   return supabaseApi.postAdjustmentSupabase(adjustment)
+}
+
+export function createPart(token: string, part: PartInput) {
+  void token
+  return supabaseApi.createPartSupabase(part)
+}
+
+export function updatePart(token: string, id: string, part: PartInput) {
+  void token
+  return supabaseApi.updatePartSupabase(id, part)
+}
+
+export function deactivatePart(token: string, id: string) {
+  void token
+  return supabaseApi.deactivatePartSupabase(id)
 }
 
 export function getAdminOverview(token: string) {
@@ -81,3 +104,6 @@ export function adminUnlockUser(token: string, userId: string) {
 export function adminSetRole(token: string, userId: string, role: AuthUser['role']) {
   return supabaseApi.adminSetRoleSupabase(token, userId, role)
 }
+
+// Keep for backward compatibility - callers don't break if they import Part
+export type { Part }
