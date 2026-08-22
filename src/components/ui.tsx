@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { AlertCircle, ChevronDown, Eye, EyeOff, LoaderCircle, X } from 'lucide-react'
 import { useLanguage } from '../i18n/useLanguage'
 import { cn } from '../lib/utils'
+import { DatePicker } from './DatePicker'
 
 const variants = {
   primary: 'border border-[var(--brand-blue-strong)] bg-[var(--brand-blue)] text-white hover:bg-[var(--brand-blue-strong)]',
@@ -42,7 +43,10 @@ export function FieldLabel({ htmlFor, children, required, hint }: { htmlFor: str
 
 export const fieldBase = 'min-h-10 w-full border-0 border-b-2 border-[var(--border-strong)] bg-transparent px-0 pb-1.5 pt-0 text-sm text-[var(--text)] outline-none transition-[border-color] placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] disabled:cursor-not-allowed disabled:opacity-60'
 
+
+
 export function TextField({ id, label, value, onChange, placeholder, required, hint, type = 'text', error, disabled }: { id: string; label: string; value: string; onChange: (value: string) => void; placeholder?: string; required?: boolean; hint?: string; type?: 'text' | 'date' | 'search' | 'email'; error?: string; disabled?: boolean }) {
+  if (type === 'date') return <DatePicker id={id} label={label} value={value} onChange={onChange} required={required} hint={hint} disabled={disabled} error={error} />
   return <div>{label && <FieldLabel htmlFor={id} required={required} hint={hint}>{label}</FieldLabel>}<input id={id} type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder ?? ' '} required={required} disabled={disabled} className={cn(fieldBase, error && 'border-[var(--danger)]')} />{error && <p className='mt-1 text-[11px] text-[var(--danger)]'>{error}</p>}</div>
 }
 
@@ -124,8 +128,17 @@ export function Drawer({ open, onClose, title, description, children, footer, wi
   const onCloseRef = useRef(onClose)
   const titleId = useId()
   const { t } = useLanguage()
+  const [shouldRender, setShouldRender] = useState(open)
 
   useEffect(() => { onCloseRef.current = onClose }, [onClose])
+  useEffect(() => {
+    if (open) setShouldRender(true)
+    else {
+      const timer = setTimeout(() => setShouldRender(false), 220)
+      return () => clearTimeout(timer)
+    }
+  }, [open])
+
   useEffect(() => {
     if (!open) return
     previousFocus.current = document.activeElement as HTMLElement
@@ -149,10 +162,10 @@ export function Drawer({ open, onClose, title, description, children, footer, wi
   return createPortal(
     <div
       aria-hidden={!open}
-      className={cn('fixed inset-0 z-50 flex justify-end transition-[visibility] duration-300', open ? 'visible' : 'invisible')}
+      className={cn('fixed inset-0 z-50 flex justify-end transition-[visibility] duration-200', open ? 'visible' : 'invisible')}
     >
       <div
-        className={cn('absolute inset-0 bg-[#07131d]/55 backdrop-blur-[2px] transition-opacity duration-300', open ? 'opacity-100' : 'opacity-0')}
+        className={cn('absolute inset-0 bg-[#07131d]/60 transition-opacity duration-200', open ? 'opacity-100' : 'opacity-0')}
         aria-hidden='true'
         onClick={() => onCloseRef.current()}
       />
@@ -163,7 +176,7 @@ export function Drawer({ open, onClose, title, description, children, footer, wi
         aria-modal='true'
         aria-labelledby={titleId}
         className={cn(
-          'relative flex h-full flex-col border-l border-[var(--border)] bg-[var(--surface)] shadow-2xl outline-none transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+          'relative flex h-full flex-col border-l border-[var(--border)] bg-[var(--surface)] shadow-2xl outline-none will-change-transform transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
           width === 'sm' ? 'w-full max-w-sm' : width === 'lg' ? 'w-full max-w-2xl' : 'w-full max-w-xl',
           open ? 'translate-x-0' : 'translate-x-full',
         )}
@@ -177,7 +190,7 @@ export function Drawer({ open, onClose, title, description, children, footer, wi
             <X size={16} />
           </button>
         </div>
-        <div className='flex-1 overflow-y-auto px-6 py-6'>{children}</div>
+        <div className='flex-1 overflow-y-auto px-6 py-6'>{shouldRender ? children : null}</div>
         {footer && (
           <div className='shrink-0 border-t border-[var(--border)] bg-[var(--surface-muted)] px-6 py-4'>
             {footer}
@@ -188,7 +201,6 @@ export function Drawer({ open, onClose, title, description, children, footer, wi
     document.body,
   )
 }
-
 export function FormError({ message }: { message?: string }) {
   if (!message) return null
   return (
@@ -213,3 +225,4 @@ export function LoadingState() {
   const { t } = useLanguage()
   return <div className='flex min-h-48 items-center justify-center gap-3 text-sm text-[var(--text-muted)]'><LoaderCircle className='animate-spin' size={19} aria-hidden='true' /><span>{t('common.loading')}</span></div>
 }
+

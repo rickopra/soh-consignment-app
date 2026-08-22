@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Download, FileDiff, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useToast } from '../components/toast'
 import { Button, Drawer, FormDivider, FormError, FormRow, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextField } from '../components/ui'
@@ -48,14 +48,17 @@ export default function InventoryPage() {
   const { parts, outbound, inbound, adjustments, createPart, updatePart, deactivatePart } = useAppStore()
   const user = useAuthStore((state) => state.user)
   const isAdmin = user?.role === 'ADMIN'
-  const inventory = calculateInventory(parts, outbound, inbound, adjustments)
+  const inventory = useMemo(() => calculateInventory(parts, outbound, inbound, adjustments), [adjustments, inbound, outbound, parts])
   const { push } = useToast()
   const { addAdjustment } = useAppStore()
-  const activeParts = parts.filter(p => p.active)
+  const activeParts = useMemo(() => parts.filter((part) => part.active), [parts])
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StockFilter>('ALL')
-  const filtered = inventory.filter((item) => `${item.partNumber} ${item.model} ${item.description} ${item.location}`.toLowerCase().includes(search.toLowerCase()) && (statusFilter === 'ALL' || item.status === statusFilter))
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return inventory.filter((item) => `${item.partNumber} ${item.model} ${item.description} ${item.location}`.toLowerCase().includes(query) && (statusFilter === 'ALL' || item.status === statusFilter))
+  }, [inventory, search, statusFilter])
 
   // Part CRUD modal state
   const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null)
