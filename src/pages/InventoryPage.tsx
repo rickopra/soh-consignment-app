@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Download, FileDiff, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useToast } from '../components/toast'
-import { Button, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextField } from '../components/ui'
+import { Button, Drawer, FormDivider, FormError, FormRow, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextField } from '../components/ui'
 import { useLanguage } from '../i18n/useLanguage'
 import { localizedError } from '../lib/localizedError'
 import { calculateInventory, downloadCsv, todayIso } from '../lib/utils'
@@ -250,31 +250,50 @@ export default function InventoryPage() {
         </div>
       </Modal>
 
-      {/* Add / Edit Part Modal */}
-      <Modal open={modalMode !== null} onClose={closeModal} title={modalMode === 'add' ? t('inventory.addPartTitle') : t('inventory.editPartTitle')} description={modalMode === 'add' ? t('inventory.addPartDescription') : t('inventory.editPartDescription')} size='lg'>
-        <div className='space-y-6'>
-          <div className='grid gap-4 sm:grid-cols-2'>
+      {/* Add / Edit Part Drawer */}
+      <Drawer
+        open={modalMode !== null}
+        onClose={closeModal}
+        title={modalMode === 'add' ? t('inventory.addPartTitle') : t('inventory.editPartTitle')}
+        description={modalMode === 'add' ? t('inventory.addPartDescription') : t('inventory.editPartDescription')}
+        width='md'
+        footer={
+          <div className='flex justify-end gap-3'>
+            <Button variant='secondary' onClick={closeModal} disabled={saving}>{t('common.cancel')}</Button>
+            <Button onClick={() => void submitPart()} disabled={saving}>{saving ? t('common.saving') : t('common.save')}</Button>
+          </div>
+        }
+      >
+        <div className='flex flex-col gap-7'>
+          {modalMode === 'edit' && editTarget && (
+            <div className='rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3'>
+              <p className='text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-subtle)]'>{t('common.partNumber')}</p>
+              <p className='mt-1 font-semibold text-[var(--text)]'>{editTarget.partNumber}</p>
+              <p className='mt-1 text-xs text-[var(--text-muted)]'>{editTarget.description}</p>
+            </div>
+          )}
+
+          <FormRow>
             <TextField id='part-number' label={t('common.partNumber')} value={draft.partNumber} onChange={(value) => setDraft((current) => ({ ...current, partNumber: value }))} required disabled={modalMode === 'edit'} />
             <TextField id='part-model' label={t('inventory.model')} value={draft.model} onChange={(value) => setDraft((current) => ({ ...current, model: value }))} hint={t('common.optional')} />
             <TextField id='part-description' label={t('common.description')} value={draft.description} onChange={(value) => setDraft((current) => ({ ...current, description: value }))} required />
             <TextField id='part-location' label={t('common.location')} value={draft.location} onChange={(value) => setDraft((current) => ({ ...current, location: value }))} required />
             <TextField id='part-replacement' label={t('inventory.replacementPart')} value={draft.replacementPartNumber} onChange={(value) => setDraft((current) => ({ ...current, replacementPartNumber: value }))} hint={t('common.optional')} />
             <SelectField id='part-warehouse' label={t('inventory.warehouseType')} value={draft.warehouseType} onChange={(value) => setDraft((current) => ({ ...current, warehouseType: value as WarehouseType }))} options={warehouseOptions} />
-          </div>
-          <fieldset className='border-t border-[var(--border)] pt-5'>
-            <legend className='text-sm font-semibold text-[var(--text)]'>{t('inventory.stockSettings')}</legend>
-            <div className='mt-4 grid gap-4 sm:grid-cols-3'>
-              <NumberField id='part-opening-stock' label={t('inventory.openingStock')} value={draft.openingStock} onChange={(value) => setDraft((current) => ({ ...current, openingStock: value }))} min={0} required />
-              <NumberField id='part-min' label={t('inventory.minStock')} value={draft.minStock} onChange={(value) => setDraft((current) => ({ ...current, minStock: value, maxStock: Math.max(current.maxStock, value) }))} min={0} required />
-              <NumberField id='part-max' label={t('inventory.maxStock')} value={draft.maxStock} onChange={(value) => setDraft((current) => ({ ...current, maxStock: value }))} min={draft.minStock} required />
-            </div>
-            <div className='mt-4 max-w-xs'><TextField id='part-opening-date' label={t('inventory.openingDate')} type='date' value={draft.openingStockDate} onChange={(value) => setDraft((current) => ({ ...current, openingStockDate: value }))} hint={t('common.optional')} /></div>
-          </fieldset>
-          {partError && <p role='alert' className='border-l-4 border-[#a33945] bg-[#f8e9eb] px-4 py-3 text-sm leading-6 text-[#7f2834]'>{partError}</p>}
-          <div className='flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-5 sm:flex-row sm:justify-end'><Button variant='secondary' onClick={closeModal} disabled={saving}>{t('common.cancel')}</Button><Button onClick={() => void submitPart()} disabled={saving}>{saving ? t('common.saving') : t('common.save')}</Button></div>
-        </div>
-      </Modal>
+          </FormRow>
 
+          <FormDivider label={t('inventory.stockSettings')} />
+          <FormRow cols={3}>
+            <NumberField id='part-opening-stock' label={t('inventory.openingStock')} value={draft.openingStock} onChange={(value) => setDraft((current) => ({ ...current, openingStock: value }))} min={0} required />
+            <NumberField id='part-min' label={t('inventory.minStock')} value={draft.minStock} onChange={(value) => setDraft((current) => ({ ...current, minStock: value, maxStock: Math.max(current.maxStock, value) }))} min={0} required />
+            <NumberField id='part-max' label={t('inventory.maxStock')} value={draft.maxStock} onChange={(value) => setDraft((current) => ({ ...current, maxStock: value }))} min={draft.minStock} required />
+          </FormRow>
+          <div className='max-w-xs'>
+            <TextField id='part-opening-date' label={t('inventory.openingDate')} type='date' value={draft.openingStockDate} onChange={(value) => setDraft((current) => ({ ...current, openingStockDate: value }))} hint={t('common.optional')} />
+          </div>
+          <FormError message={partError} />
+        </div>
+      </Drawer>
       {/* Delete Confirm Modal */}
       <Modal open={confirmDelete !== null} onClose={() => setConfirmDelete(null)} title={t('inventory.deleteConfirmTitle')} description={t('inventory.deleteConfirmDescription')} size='sm'>
         <div className='space-y-4'>

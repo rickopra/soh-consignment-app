@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ArrowDownToLine, CheckCircle2, Pencil, Plus, Search } from 'lucide-react'
 import { useToast } from '../components/toast'
-import { Button, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextAreaField, TextField } from '../components/ui'
+import { Button, Drawer, FormDivider, FormError, FormRow, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextAreaField, TextField } from '../components/ui'
 import { useLanguage } from '../i18n/useLanguage'
 import { localizedError } from '../lib/localizedError'
 import { defaultInboundDraft, useAppStore } from '../store/appStore'
@@ -18,7 +18,6 @@ export default function InboundPage() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
-  // Edit GR modal
   const [grEdit, setGrEdit] = useState<InboundTransaction | null>(null)
   const [grDraft, setGrDraft] = useState<{ grStatus: GrStatus; qtyActual: number; qtyMatdoc: number; matdocNumber: string }>({ grStatus: 'Pending', qtyActual: 0, qtyMatdoc: 1, matdocNumber: '' })
   const [grError, setGrError] = useState('')
@@ -29,6 +28,7 @@ export default function InboundPage() {
   const totalDocument = inbound.reduce((total, item) => total + item.qtyMatdoc, 0)
   const totalActual = inbound.reduce((total, item) => total + item.qtyActual, 0)
   const pendingGr = inbound.filter((item) => item.grStatus !== 'Done GR').length
+  const isId = language === 'id'
 
   const closeModal = () => { setOpen(false); setError('') }
   const openModal = () => { setDraft({ ...defaultInboundDraft, partNumber: activeParts[0]?.partNumber ?? '' }); setError(''); setOpen(true) }
@@ -59,7 +59,7 @@ export default function InboundPage() {
     setGrError('')
     try {
       await updateInbound(grEdit.id, { grStatus: grDraft.grStatus, qtyActual: grDraft.qtyActual, qtyMatdoc: grDraft.qtyMatdoc, matdocNumber: grDraft.matdocNumber })
-      push({ tone: 'success', title: t('inbound.grUpdated'), description: `${grEdit.partNumber} → ${grDraft.grStatus === 'Done GR' ? t('common.doneGr') : t('common.pending')}` })
+      push({ tone: 'success', title: t('inbound.grUpdated'), description: `${grEdit.partNumber} — ${grDraft.grStatus === 'Done GR' ? t('common.doneGr') : t('common.pending')}` })
       setGrEdit(null)
     } catch (grErr) {
       setGrError(localizedError(grErr, language, t, 'inbound.saveFailed'))
@@ -79,70 +79,112 @@ export default function InboundPage() {
       <section className='app-panel mb-6 grid overflow-hidden sm:grid-cols-2 xl:grid-cols-4' aria-label={t('inbound.title')}>
         {metrics.map((metric, index) => <div key={metric.label} className={`min-h-[104px] p-5 ${index < metrics.length - 1 ? 'border-b border-[var(--border)] sm:border-r xl:border-b-0' : ''}`}><p className='text-xs font-medium text-[var(--text-muted)]'>{metric.label}</p><p className={`mt-3 text-2xl font-semibold ${metric.emphasis ? 'text-[var(--warning)]' : 'text-[var(--text)]'}`}>{formatNumber(metric.value)}</p></div>)}
       </section>
+
       <section className='app-panel overflow-hidden'>
-        <div className='border-b border-[var(--border)] p-4 sm:p-5'><div className='relative max-w-xl'><label htmlFor='inbound-search' className='sr-only'>{t('inbound.searchLabel')}</label><Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' /><input id='inbound-search' type='search' value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('inbound.searchPlaceholder')} className='min-h-11 w-full rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' /></div></div>
-                {/* Mobile card list ? hidden on md+ */}
+        <div className='border-b border-[var(--border)] p-4 sm:p-5'><div className='relative max-w-xl'><label htmlFor='inbound-search' className='sr-only'>{t('inbound.searchLabel')}</label><Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' /><input id='inbound-search' type='search' placeholder={t('inbound.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} className='min-h-11 w-full rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' /></div></div>
+
+        {/* Mobile cards */}
         <ul className='divide-y divide-[var(--border)] md:hidden'>
-          {filtered.map((item) => {
-            const difference = Math.abs(item.qtyMatdoc - item.qtyActual)
-            return (
-              <li key={item.id} className='p-4'>
-                <div className='flex items-start justify-between gap-3'>
-                  <div className='min-w-0'>
-                    <p className='truncate font-semibold text-[var(--text)]'>{item.partNumber}</p>
-                    <p className='mt-0.5 truncate text-xs text-[var(--text-muted)]'>{parts.find(p => p.partNumber === item.partNumber)?.description}</p>
-                    <p className='mt-1 text-[11px] text-[var(--text-subtle)]'>{formatDate(item.receivedDate)} {item.matdocNumber ? `? ${item.matdocNumber}` : ''}</p>
-                  </div>
-                  <Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('inbound.editGr')} ${item.partNumber}`}><Pencil size={14} aria-hidden='true' /></Button>
+          {filtered.map((item) => (
+            <li key={item.id} className='p-4'>
+              <div className='flex items-start justify-between gap-2'>
+                <div className='min-w-0'>
+                  <p className='truncate font-semibold text-[var(--text)]'>{item.partNumber}</p>
+                  <p className='mt-0.5 text-xs text-[var(--text-muted)]'>{formatDate(item.receivedDate)}</p>
                 </div>
-                <div className='mt-3 flex items-center justify-between rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2'>
-                  <StatusBadge status={item.grStatus === 'Done GR' ? 'ready' : 'neutral'}>{item.grStatus === 'Done GR' ? <><CheckCircle2 size={11} className='mr-1 inline' aria-hidden='true' />{t('common.doneGr')}</> : t('common.pending')}</StatusBadge>
-                  <div className='text-right'>
-                    <p className='text-[10px] font-semibold uppercase tracking-wide text-[var(--text-subtle)]'>{t('inbound.actualQty')} / DOC</p>
-                    <p className='mt-0.5 text-sm font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)} <span className='text-[var(--text-muted)] font-normal'>/ {formatNumber(item.qtyMatdoc)}</span></p>
-                  </div>
-                </div>
-                {difference > 0 && <p className='mt-2 text-xs text-[var(--warning)]'>{t('inbound.difference', { count: formatNumber(difference) })}</p>}
-              </li>
-            )
-          })}
+                {item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1' />{t('common.doneGr')}</StatusBadge> : <Button variant='secondary' size='sm' onClick={() => openGrEdit(item)}>{isId ? 'Konfirmasi GR' : 'Confirm GR'}</Button>}
+              </div>
+              <div className='mt-3 grid grid-cols-2 divide-x divide-[var(--border)] rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] text-center'>
+                <div className='py-2 px-1'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{t('inbound.documentQty')}</p><p className='mt-1 font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</p></div>
+                <div className='py-2 px-1'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{t('inbound.actualQty')}</p><p className='mt-1 font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</p></div>
+              </div>
+            </li>
+          ))}
           {filtered.length === 0 && <li className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</li>}
         </ul>
 
-        {/* Desktop table ? hidden on <md */}
-        <div className='hidden overflow-x-auto md:block'><table className='data-table min-w-[820px]'><caption className='sr-only'>{t('inbound.tableCaption')}</caption><thead><tr><th scope='col'>{t('inbound.dateDocument')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col' className='text-right'>{t('inbound.documentQty')}</th><th scope='col' className='text-right'>{t('inbound.actualQty')}</th><th scope='col'>{t('inbound.grStatus')}</th><th scope='col' className='text-right'>{t('common.actions')}</th></tr></thead><tbody>{filtered.map((item) => { const difference = Math.abs(item.qtyMatdoc - item.qtyActual); return <tr key={item.id}><td><p className='font-semibold text-[var(--text)]'>{formatDate(item.receivedDate)}</p>{item.matdocNumber && <p className='mt-1 text-xs text-[var(--text-muted)]'>{item.matdocNumber}</p>}</td><td><p className='font-semibold text-[var(--text)]'>{item.partNumber}</p><p className='mt-1 max-w-[320px] truncate text-xs text-[var(--text-muted)]'>{parts.find((part) => part.partNumber === item.partNumber)?.description ?? t('inbound.partNotFound')}</p></td><td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</td><td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</td><td><StatusBadge status={item.grStatus === 'Done GR' ? 'ready' : 'neutral'}>{item.grStatus === 'Done GR' ? <><CheckCircle2 size={11} className='mr-1 inline' aria-hidden='true' />{t('common.doneGr')}</> : t('common.pending')}</StatusBadge>{difference > 0 && <p className='mt-2 text-xs text-[var(--warning)]'>{t('inbound.difference', { count: formatNumber(difference) })}</p>}</td><td className='text-right'><Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('inbound.editGr')} ${item.partNumber}`}><Pencil size={14} aria-hidden='true' />{t('inbound.editGr')}</Button></td></tr> })}{filtered.length === 0 && <tr><td colSpan={6} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</td></tr>}</tbody></table></div>
+        {/* Desktop table */}
+        <div className='hidden overflow-x-auto md:block'>
+          <table className='data-table min-w-[920px]'><caption className='sr-only'>{t('inbound.tableCaption')}</caption>
+            <thead><tr><th scope='col'>{t('inbound.receivedDate')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col' className='text-right'>{t('inbound.documentQty')}</th><th scope='col' className='text-right'>{t('inbound.actualQty')}</th><th scope='col'>{t('inbound.references')}</th><th scope='col'>{t('inbound.grStatus')}</th><th scope='col' className='text-right'>{t('common.actions')}</th></tr></thead>
+            <tbody>{filtered.map((item) => {
+              const refs = [item.matdocNumber ? `Matdoc: ${item.matdocNumber}` : null, item.poNumber ? `PO: ${item.poNumber}` : null, item.spbNumber ? `SPB: ${item.spbNumber}` : null].filter(Boolean).join(' · ')
+              return (
+                <tr key={item.id}>
+                  <td className='whitespace-nowrap'><p className='font-semibold text-[var(--text)]'>{formatDate(item.receivedDate)}</p></td>
+                  <td><p className='font-semibold text-[var(--text)]'>{item.partNumber}</p><p className='mt-1 max-w-[260px] truncate text-xs text-[var(--text-muted)]'>{parts.find((part) => part.partNumber === item.partNumber)?.description ?? t('common.notAvailable')}</p></td>
+                  <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</td>
+                  <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</td>
+                  <td><p className='max-w-[240px] text-xs leading-5 text-[var(--text-muted)]'>{refs || '—'}</p></td>
+                  <td>{item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1.5' />{t('common.doneGr')}</StatusBadge> : <StatusBadge status='warning'>{t('common.pending')}</StatusBadge>}</td>
+                  <td className='text-right'><Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('common.edit')} GR ${item.partNumber}`}><Pencil size={13} aria-hidden='true' />{t('common.edit')}</Button></td>
+                </tr>
+              )
+            })}{filtered.length === 0 && <tr><td colSpan={7} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</td></tr>}</tbody>
+          </table>
+        </div>
       </section>
 
-      {/* New Inbound Modal */}
-      <Modal open={open} onClose={closeModal} title={t('inbound.modalTitle')} description={t('inbound.modalDescription')} size='lg'>
-        <div className='space-y-6'>
-          <div className='grid gap-4 sm:grid-cols-2'><TextField id='inbound-date' label={t('inbound.receivedDate')} type='date' value={draft.receivedDate} onChange={(value) => setDraft((current) => ({ ...current, receivedDate: value }))} required /><SelectField id='inbound-part' label={t('common.partNumber')} value={draft.partNumber} onChange={(value) => setDraft((current) => ({ ...current, partNumber: value }))} options={activeParts.map((part) => ({ value: part.partNumber, label: `${part.partNumber} | ${part.description.slice(0, 34)}` }))} required /><TextField id='inbound-matdoc' label={t('inbound.materialDocument')} value={draft.matdocNumber} onChange={(value) => setDraft((current) => ({ ...current, matdocNumber: value }))} hint={t('common.optional')} /><SelectField id='inbound-status' label={t('inbound.grStatus')} value={draft.grStatus} onChange={(value) => setDraft((current) => ({ ...current, grStatus: value as GrStatus }))} options={[{ value: 'Pending', label: t('common.pending') }, { value: 'Done GR', label: t('common.doneGr') }]} required /><NumberField id='inbound-matdoc-qty' label={t('inbound.documentQty')} value={draft.qtyMatdoc} onChange={(value) => setDraft((current) => ({ ...current, qtyMatdoc: value }))} min={1} required /><NumberField id='inbound-actual-qty' label={t('inbound.actualQty')} value={draft.qtyActual} onChange={(value) => setDraft((current) => ({ ...current, qtyActual: value }))} min={0} required /></div>
-          {currentPart && <div className='flex items-start gap-3 border-l-4 border-[var(--brand-blue)] bg-[var(--surface-muted)] px-4 py-3'><ArrowDownToLine size={17} className='mt-0.5 text-[var(--brand-blue)]' aria-hidden='true' /><div><p className='text-xs font-semibold text-[var(--text-muted)]'>{t('inbound.selectedPart')}</p><p className='mt-1 text-sm font-semibold text-[var(--text)]'>{currentPart.partNumber}</p><p className='mt-1 text-xs text-[var(--text-muted)]'>{currentPart.description}</p></div></div>}
-          {draft.qtyMatdoc !== draft.qtyActual && <p className='border-l-4 border-[var(--warning)] bg-[#fbf2df] px-4 py-3 text-sm leading-6 text-[#80500c]'>{t('inbound.differenceNotice', { count: formatNumber(Math.abs(draft.qtyMatdoc - draft.qtyActual)) })}</p>}
-          <fieldset className='border-t border-[var(--border)] pt-5'><legend className='text-sm font-semibold text-[var(--text)]'>{t('inbound.references')}</legend><div className='mt-4 grid gap-4 sm:grid-cols-2'><TextField id='inbound-spb' label='No. SPB' value={draft.spbNumber} onChange={(value) => setDraft((current) => ({ ...current, spbNumber: value }))} hint={t('common.optional')} /><TextField id='inbound-po' label='No. PO' value={draft.poNumber} onChange={(value) => setDraft((current) => ({ ...current, poNumber: value }))} hint={t('common.optional')} /><TextField id='inbound-invoice' label='Invoice / TO' value={draft.invoiceOrTo} onChange={(value) => setDraft((current) => ({ ...current, invoiceOrTo: value }))} hint={t('common.optional')} /><TextField id='inbound-source' label={t('inbound.source')} value={draft.source} onChange={(value) => setDraft((current) => ({ ...current, source: value }))} hint={t('common.optional')} /></div></fieldset>
+      {/* New Inbound Drawer */}
+      <Drawer open={open} onClose={closeModal} title={t('inbound.modalTitle')} description={t('inbound.modalDescription')} width='md'
+        footer={
+          <div className='flex justify-end gap-3'>
+            <Button variant='secondary' onClick={closeModal} disabled={saving}>{t('common.cancel')}</Button>
+            <Button onClick={() => void submit()} disabled={saving}>{saving ? t('common.saving') : t('inbound.save')}</Button>
+          </div>
+        }
+      >
+        <div className='flex flex-col gap-7'>
+          <FormRow>
+            <TextField id='inbound-date' label={t('inbound.receivedDate')} type='date' value={draft.receivedDate} onChange={(value) => setDraft((current) => ({ ...current, receivedDate: value }))} required />
+            <SelectField id='inbound-part' label={t('common.partNumber')} value={draft.partNumber} onChange={(value) => setDraft((current) => ({ ...current, partNumber: value }))} options={activeParts.map((part) => ({ value: part.partNumber, label: `${part.partNumber} | ${part.description.slice(0, 30)}` }))} required />
+          </FormRow>
+          {currentPart && (
+            <div className='flex items-start gap-3 rounded-[8px] border-l-4 border-[var(--brand-blue)] bg-[var(--surface-muted)] px-4 py-3'>
+              <ArrowDownToLine size={16} className='mt-0.5 shrink-0 text-[var(--brand-blue)]' aria-hidden='true' />
+              <div>
+                <p className='text-[11px] font-semibold uppercase tracking-wide text-[var(--text-muted)]'>{t('inbound.selectedPart')}</p>
+                <p className='mt-1 text-sm font-semibold text-[var(--text)]'>{currentPart.partNumber}</p>
+                <p className='mt-0.5 text-xs text-[var(--text-muted)]'>{currentPart.description}</p>
+              </div>
+            </div>
+          )}
+          <FormRow cols={3}>
+            <SelectField id='inbound-status' label={t('inbound.grStatus')} value={draft.grStatus} onChange={(value) => setDraft((current) => ({ ...current, grStatus: value as GrStatus }))} options={[{ value: 'Pending', label: t('common.pending') }, { value: 'Done GR', label: t('common.doneGr') }]} required />
+            <NumberField id='inbound-matdoc-qty' label={t('inbound.documentQty')} value={draft.qtyMatdoc} onChange={(value) => setDraft((current) => ({ ...current, qtyMatdoc: value }))} min={1} required />
+            <NumberField id='inbound-actual-qty' label={t('inbound.actualQty')} value={draft.qtyActual} onChange={(value) => setDraft((current) => ({ ...current, qtyActual: value }))} min={0} required />
+          </FormRow>
+          {draft.qtyMatdoc !== draft.qtyActual && <p className='rounded-[8px] border border-[var(--warning)] bg-[#fbf2df] px-4 py-3 text-sm leading-6 text-[#80500c]'>{t('inbound.differenceNotice', { count: formatNumber(Math.abs(draft.qtyMatdoc - draft.qtyActual)) })}</p>}
+          <FormDivider label={t('inbound.references')} />
+          <FormRow>
+            <TextField id='inbound-matdoc' label={t('inbound.materialDocument')} value={draft.matdocNumber} onChange={(value) => setDraft((current) => ({ ...current, matdocNumber: value }))} hint={t('common.optional')} />
+            <TextField id='inbound-spb' label='No. SPB' value={draft.spbNumber} onChange={(value) => setDraft((current) => ({ ...current, spbNumber: value }))} hint={t('common.optional')} />
+            <TextField id='inbound-po' label='No. PO' value={draft.poNumber} onChange={(value) => setDraft((current) => ({ ...current, poNumber: value }))} hint={t('common.optional')} />
+            <TextField id='inbound-invoice' label='Invoice / TO' value={draft.invoiceOrTo} onChange={(value) => setDraft((current) => ({ ...current, invoiceOrTo: value }))} hint={t('common.optional')} />
+            <TextField id='inbound-source' label={t('inbound.source')} value={draft.source} onChange={(value) => setDraft((current) => ({ ...current, source: value }))} hint={t('common.optional')} />
+          </FormRow>
           <TextAreaField id='inbound-notes' label={t('inbound.notes')} value={draft.notes} onChange={(value) => setDraft((current) => ({ ...current, notes: value }))} hint={t('common.optional')} />
-          {error && <p role='alert' className='border-l-4 border-[#a33945] bg-[#f8e9eb] px-4 py-3 text-sm leading-6 text-[#7f2834]'>{error}</p>}
-          <div className='flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-5 sm:flex-row sm:justify-end'><Button variant='secondary' onClick={closeModal} disabled={saving}>{t('common.cancel')}</Button><Button onClick={() => void submit()} disabled={saving}>{saving ? t('common.saving') : t('inbound.save')}</Button></div>
+          <FormError message={error} />
         </div>
-      </Modal>
+      </Drawer>
 
-      {/* Edit GR Modal */}
+      {/* Edit GR Status Modal (Kept as Modal since it's just a quick confirm/status update) */}
       <Modal open={grEdit !== null} onClose={() => setGrEdit(null)} title={t('inbound.editGrTitle')} description={t('inbound.editGrDescription')} size='md'>
         {grEdit && (
           <div className='space-y-6'>
-            <div className='rounded-[6px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3'>
+            <div className='rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3'>
               <p className='font-semibold text-[var(--text)]'>{grEdit.partNumber}</p>
               <p className='mt-1 text-xs text-[var(--text-muted)]'>{parts.find((p) => p.partNumber === grEdit.partNumber)?.description}</p>
               <p className='mt-1 text-xs text-[var(--text-subtle)]'>{formatDate(grEdit.receivedDate)}</p>
             </div>
-            <div className='grid gap-4 sm:grid-cols-2'>
+            <FormRow>
               <SelectField id='gr-status' label={t('inbound.grStatus')} value={grDraft.grStatus} onChange={(value) => setGrDraft((current) => ({ ...current, grStatus: value as GrStatus }))} options={[{ value: 'Pending', label: t('common.pending') }, { value: 'Done GR', label: t('common.doneGr') }]} required />
               <TextField id='gr-matdoc' label={t('inbound.materialDocument')} value={grDraft.matdocNumber} onChange={(value) => setGrDraft((current) => ({ ...current, matdocNumber: value }))} hint={t('common.optional')} />
               <NumberField id='gr-matdoc-qty' label={t('inbound.documentQty')} value={grDraft.qtyMatdoc} onChange={(value) => setGrDraft((current) => ({ ...current, qtyMatdoc: value }))} min={1} required />
               <NumberField id='gr-actual-qty' label={t('inbound.actualQty')} value={grDraft.qtyActual} onChange={(value) => setGrDraft((current) => ({ ...current, qtyActual: value }))} min={0} required />
-            </div>
-            {grDraft.qtyMatdoc !== grDraft.qtyActual && <p className='border-l-4 border-[var(--warning)] bg-[#fbf2df] px-4 py-3 text-sm leading-6 text-[#80500c]'>{t('inbound.differenceNotice', { count: formatNumber(Math.abs(grDraft.qtyMatdoc - grDraft.qtyActual)) })}</p>}
-            {grError && <p role='alert' className='border-l-4 border-[#a33945] bg-[#f8e9eb] px-4 py-3 text-sm leading-6 text-[#7f2834]'>{grError}</p>}
+            </FormRow>
+            {grDraft.qtyMatdoc !== grDraft.qtyActual && <p className='rounded-[8px] border border-[var(--warning)] bg-[#fbf2df] px-4 py-3 text-sm leading-6 text-[#80500c]'>{t('inbound.differenceNotice', { count: formatNumber(Math.abs(grDraft.qtyMatdoc - grDraft.qtyActual)) })}</p>}
+            <FormError message={grError} />
             <div className='flex flex-col-reverse gap-3 border-t border-[var(--border)] pt-5 sm:flex-row sm:justify-end'><Button variant='secondary' onClick={() => setGrEdit(null)} disabled={grSaving}>{t('common.cancel')}</Button><Button onClick={() => void submitGrEdit()} disabled={grSaving}>{grSaving ? t('common.saving') : t('inbound.saveGr')}</Button></div>
           </div>
         )}
