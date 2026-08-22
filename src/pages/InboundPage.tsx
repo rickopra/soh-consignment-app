@@ -1,11 +1,46 @@
 import { useState } from 'react'
-import { ArrowDownToLine, CheckCircle2, Pencil, Plus, Search } from 'lucide-react'
+import { ArrowDownToLine, CheckCircle2, MessageSquareText, Pencil, Plus, Search } from 'lucide-react'
 import { useToast } from '../components/toast'
 import { Button, Drawer, FormDivider, FormError, FormRow, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextAreaField, TextField } from '../components/ui'
 import { useLanguage } from '../i18n/useLanguage'
 import { localizedError } from '../lib/localizedError'
 import { defaultInboundDraft, useAppStore } from '../store/appStore'
 import type { GrStatus, InboundTransaction } from '../types'
+
+
+function InboundReferenceList({ matdocNumber, spbNumber, poNumber, invoiceOrTo, source, emptyLabel }: { matdocNumber: string; spbNumber: string; poNumber: string; invoiceOrTo: string; source: string; emptyLabel: string }) {
+  const docs = [
+    { label: 'Matdoc', value: matdocNumber },
+    { label: 'SPB', value: spbNumber },
+    { label: 'PO', value: poNumber },
+    { label: 'Invoice / TO', value: invoiceOrTo },
+    { label: 'Sumber', value: source },
+  ].filter((d) => d.value?.trim())
+
+  if (!docs.length) return <span className='text-xs text-[var(--text-subtle)]'>{emptyLabel}</span>
+  
+  return (
+    <div className='flex flex-wrap gap-1.5'>
+      {docs.map(({ label, value }) => (
+        <span key={label} title={label + ': ' + value} className='inline-flex min-w-0 items-center gap-1.5 rounded-[5px] border border-[var(--border)] bg-[var(--surface-raised)] px-2 py-1 text-[11px] leading-4'>
+          <span className='shrink-0 font-bold text-[var(--brand-blue)]'>{label}</span>
+          <span className='break-all font-medium tabular-nums text-[var(--text)]'>{value}</span>
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function NotesPreview({ notes, emptyLabel, full = false }: { notes: string; emptyLabel: string; full?: boolean }) {
+  const value = notes?.trim()
+  if (!value) return <span className='text-xs text-[var(--text-subtle)]'>{emptyLabel}</span>
+  return (
+    <div className='flex min-w-0 items-start gap-2 text-[var(--text-muted)]'>
+      <MessageSquareText size={14} className='mt-0.5 shrink-0 text-[var(--brand-orange)]' aria-hidden='true' />
+      <p title={value} className={full ? 'whitespace-pre-wrap break-words text-xs leading-5 text-[var(--text-muted)]' : 'max-w-[240px] truncate text-xs leading-5 text-[var(--text-muted)]'}>{value}</p>
+    </div>
+  )
+}
 
 export default function InboundPage() {
   const { language, t, formatDate, formatNumber } = useLanguage()
@@ -59,7 +94,7 @@ export default function InboundPage() {
     setGrError('')
     try {
       await updateInbound(grEdit.id, { grStatus: grDraft.grStatus, qtyActual: grDraft.qtyActual, qtyMatdoc: grDraft.qtyMatdoc, matdocNumber: grDraft.matdocNumber })
-      push({ tone: 'success', title: t('inbound.grUpdated'), description: `${grEdit.partNumber} — ${grDraft.grStatus === 'Done GR' ? t('common.doneGr') : t('common.pending')}` })
+      push({ tone: 'success', title: t('inbound.grUpdated'), description: `${grEdit.partNumber} â€” ${grDraft.grStatus === 'Done GR' ? t('common.doneGr') : t('common.pending')}` })
       setGrEdit(null)
     } catch (grErr) {
       setGrError(localizedError(grErr, language, t, 'inbound.saveFailed'))
@@ -98,6 +133,14 @@ export default function InboundPage() {
                 <div className='py-2 px-1'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{t('inbound.documentQty')}</p><p className='mt-1 font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</p></div>
                 <div className='py-2 px-1'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{t('inbound.actualQty')}</p><p className='mt-1 font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</p></div>
               </div>
+              <div className='mt-3 border-t border-[var(--border)] pt-3'>
+                <p className='mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-subtle)]'>{t('inbound.references')}</p>
+                <InboundReferenceList matdocNumber={item.matdocNumber} poNumber={item.poNumber} spbNumber={item.spbNumber} invoiceOrTo={item.invoiceOrTo} source={item.source} emptyLabel={t('inbound.noReferences')} />
+              </div>
+              <div className='mt-3 border-t border-[var(--border)] pt-3'>
+                <p className='mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-subtle)]'>{t('inbound.notes')}</p>
+                <NotesPreview notes={item.notes} emptyLabel={t('inbound.noNotes')} full />
+              </div>
             </li>
           ))}
           {filtered.length === 0 && <li className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</li>}
@@ -105,22 +148,22 @@ export default function InboundPage() {
 
         {/* Desktop table */}
         <div className='hidden overflow-x-auto md:block'>
-          <table className='data-table min-w-[920px]'><caption className='sr-only'>{t('inbound.tableCaption')}</caption>
-            <thead><tr><th scope='col'>{t('inbound.receivedDate')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col' className='text-right'>{t('inbound.documentQty')}</th><th scope='col' className='text-right'>{t('inbound.actualQty')}</th><th scope='col'>{t('inbound.references')}</th><th scope='col'>{t('inbound.grStatus')}</th><th scope='col' className='text-right'>{t('common.actions')}</th></tr></thead>
+          <table className='data-table min-w-[1260px]'><caption className='sr-only'>{t('inbound.tableCaption')}</caption>
+            <thead><tr><th scope='col'>{t('inbound.receivedDate')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col' className='text-right'>{t('inbound.documentQty')}</th><th scope='col' className='text-right'>{t('inbound.actualQty')}</th><th scope='col'>{t('inbound.references')}</th><th scope='col'>{t('inbound.notes')}</th><th scope='col'>{t('inbound.grStatus')}</th><th scope='col' className='text-right'>{t('common.actions')}</th></tr></thead>
             <tbody>{filtered.map((item) => {
-              const refs = [item.matdocNumber ? `Matdoc: ${item.matdocNumber}` : null, item.poNumber ? `PO: ${item.poNumber}` : null, item.spbNumber ? `SPB: ${item.spbNumber}` : null].filter(Boolean).join(' · ')
+              const refs = [item.matdocNumber ? `Matdoc: ${item.matdocNumber}` : null, item.poNumber ? `PO: ${item.poNumber}` : null, item.spbNumber ? `SPB: ${item.spbNumber}` : null].filter(Boolean).join(' Â· ')
               return (
                 <tr key={item.id}>
                   <td className='whitespace-nowrap'><p className='font-semibold text-[var(--text)]'>{formatDate(item.receivedDate)}</p></td>
                   <td><p className='font-semibold text-[var(--text)]'>{item.partNumber}</p><p className='mt-1 max-w-[260px] truncate text-xs text-[var(--text-muted)]'>{parts.find((part) => part.partNumber === item.partNumber)?.description ?? t('common.notAvailable')}</p></td>
                   <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</td>
                   <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</td>
-                  <td><p className='max-w-[240px] text-xs leading-5 text-[var(--text-muted)]'>{refs || '—'}</p></td>
+                  <td><p className='max-w-[240px] text-xs leading-5 text-[var(--text-muted)]'>{refs || 'â€”'}</p></td>
                   <td>{item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1.5' />{t('common.doneGr')}</StatusBadge> : <StatusBadge status='warning'>{t('common.pending')}</StatusBadge>}</td>
                   <td className='text-right'><Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('common.edit')} GR ${item.partNumber}`}><Pencil size={13} aria-hidden='true' />{t('common.edit')}</Button></td>
                 </tr>
               )
-            })}{filtered.length === 0 && <tr><td colSpan={7} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</td></tr>}</tbody>
+            })}{filtered.length === 0 && <tr><td colSpan={8} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</td></tr>}</tbody>
           </table>
         </div>
       </section>

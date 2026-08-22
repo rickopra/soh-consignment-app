@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUpFromLine, Pencil, Plus, Search } from 'lucide-react'
+import { ArrowUpFromLine, MessageSquareText, Pencil, Plus, Search } from 'lucide-react'
 import { useLanguage } from '../i18n/useLanguage'
 import { localizedError } from '../lib/localizedError'
 import { useAppStore, defaultOutboundDraft } from '../store/appStore'
@@ -40,6 +40,17 @@ function DocumentReferenceList({ documents, emptyLabel }: { documents: OutboundD
   )
 }
 
+function NotesPreview({ notes, emptyLabel, full = false }: { notes: string; emptyLabel: string; full?: boolean }) {
+  const value = notes.trim()
+  if (!value) return <span className='text-xs text-[var(--text-subtle)]'>{emptyLabel}</span>
+  return (
+    <div className='flex min-w-0 items-start gap-2 text-[var(--text-muted)]'>
+      <MessageSquareText size={14} className='mt-0.5 shrink-0 text-[var(--brand-orange)]' aria-hidden='true' />
+      <p title={value} className={full ? 'whitespace-pre-wrap break-words text-xs leading-5 text-[var(--text-muted)]' : 'max-w-[240px] truncate text-xs leading-5 text-[var(--text-muted)]'}>{value}</p>
+    </div>
+  )
+}
+
 export default function OutboundPage() {
   const { language, t, formatDate, formatNumber } = useLanguage()
   const { parts, outbound, addOutbound, updateOutbound } = useAppStore()
@@ -59,7 +70,7 @@ export default function OutboundPage() {
   const isId = language === 'id'
   const currentPart = parts.find((part) => part.partNumber === draft.partNumber)
   const needsDocuments = draft.warehouseType !== 'Warehouse Store'
-  const filtered = outbound.filter((item) => `${item.partNumber} ${item.requester} ${Object.values(item.documents).join(' ')}`.toLowerCase().includes(search.toLowerCase()))
+  const filtered = outbound.filter((item) => `${item.partNumber} ${item.requester} ${Object.values(item.documents).join(' ')} ${item.notes}`.toLowerCase().includes(search.toLowerCase()))
   const totalRequested = outbound.reduce((total, item) => total + item.qtyRequest, 0)
   const totalSupplied = outbound.reduce((total, item) => total + item.qtySupply, 0)
   const totalOutstanding = outbound.reduce((total, item) => total + Math.max(0, item.qtyRequest - item.qtySupply), 0)
@@ -133,6 +144,10 @@ export default function OutboundPage() {
                   <p className='mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-subtle)]'>{t('outbound.documents')}</p>
                   <DocumentReferenceList documents={item.documents} emptyLabel={t('outbound.noDocuments')} />
                 </div>
+                <div className='mt-3 border-t border-[var(--border)] pt-3'>
+                  <p className='mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-subtle)]'>{t('outbound.notes')}</p>
+                  <NotesPreview notes={item.notes} emptyLabel={t('outbound.noNotes')} full />
+                </div>
               </li>
             )
           })}
@@ -141,8 +156,8 @@ export default function OutboundPage() {
 
         {/* Desktop table */}
         <div className='hidden overflow-x-auto md:block'>
-          <table className='data-table min-w-[1080px]'><caption className='sr-only'>{t('outbound.tableCaption')}</caption>
-            <thead><tr><th scope='col'>{t('outbound.dateRequester')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col'>{t('outbound.warehouseType')}</th><th scope='col' className='text-right'>{t('outbound.requestQty')}</th><th scope='col' className='text-right'>{t('outbound.supplyQty')}</th><th scope='col' className='text-right'>{t('outbound.outstanding')}</th><th scope='col'>{t('outbound.documents')}</th><th scope='col' className='text-right'>{t('outbound.action')}</th></tr></thead>
+          <table className='data-table min-w-[1260px]'><caption className='sr-only'>{t('outbound.tableCaption')}</caption>
+            <thead><tr><th scope='col'>{t('outbound.dateRequester')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col'>{t('outbound.warehouseType')}</th><th scope='col' className='text-right'>{t('outbound.requestQty')}</th><th scope='col' className='text-right'>{t('outbound.supplyQty')}</th><th scope='col' className='text-right'>{t('outbound.outstanding')}</th><th scope='col'>{t('outbound.documents')}</th><th scope='col'>{t('outbound.notes')}</th><th scope='col' className='text-right'>{t('outbound.action')}</th></tr></thead>
             <tbody>{filtered.map((item) => {
               const outstanding = Math.max(0, item.qtyRequest - item.qtySupply)
               return (
@@ -157,7 +172,7 @@ export default function OutboundPage() {
                   <td className='text-right'><Button variant='secondary' size='sm' onClick={() => openEdit(item)} ariaLabel={`${t('common.edit')} ${item.partNumber}`}><Pencil size={13} aria-hidden='true' />{t('common.edit')}</Button></td>
                 </tr>
               )
-            })}{filtered.length === 0 && <tr><td colSpan={8} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('outbound.noData')}</td></tr>}</tbody>
+            })}{filtered.length === 0 && <tr><td colSpan={9} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('outbound.noData')}</td></tr>}</tbody>
           </table>
         </div>
       </section>
@@ -230,6 +245,10 @@ export default function OutboundPage() {
               <div className='mt-3 border-t border-[var(--border)] pt-3'>
                 <p className='mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-subtle)]'>{t('outbound.documents')}</p>
                 <DocumentReferenceList documents={editDraft.documents} emptyLabel={t('outbound.noDocuments')} />
+              </div>
+              <div className='mt-3 border-t border-[var(--border)] pt-3'>
+                <p className='mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-subtle)]'>{t('outbound.notes')}</p>
+                <NotesPreview notes={editDraft.notes} emptyLabel={t('outbound.noNotes')} full />
               </div>
             </div>
 
