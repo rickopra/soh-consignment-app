@@ -17,6 +17,29 @@ function toEditDraft(tx: OutboundTransaction): OutboundUpdate {
   return { qtyRequest: tx.qtyRequest, qtySupply: tx.qtySupply, documents: { ...tx.documents }, notes: tx.notes }
 }
 
+const documentFields: Array<{ key: keyof OutboundDocuments; label: string }> = [
+  { key: 'pr', label: 'PR' },
+  { key: 'po', label: 'PO' },
+  { key: 'so', label: 'SO' },
+  { key: 'dn', label: 'DN' },
+  { key: 'invoice', label: 'Invoice' },
+]
+
+function DocumentReferenceList({ documents, emptyLabel }: { documents: OutboundDocuments; emptyLabel: string }) {
+  const entries = documentFields.filter(({ key }) => documents[key].trim())
+  if (!entries.length) return <span className='text-xs text-[var(--text-subtle)]'>{emptyLabel}</span>
+  return (
+    <div className='flex flex-wrap gap-1.5'>
+      {entries.map(({ key, label }) => (
+        <span key={key} title={label + ': ' + documents[key]} className='inline-flex min-w-0 items-center gap-1.5 rounded-[5px] border border-[var(--border)] bg-[var(--surface-raised)] px-2 py-1 text-[11px] leading-4'>
+          <span className='shrink-0 font-bold text-[var(--brand-blue)]'>{label}</span>
+          <span className='break-all font-medium tabular-nums text-[var(--text)]'>{documents[key]}</span>
+        </span>
+      ))}
+    </div>
+  )
+}
+
 export default function OutboundPage() {
   const { language, t, formatDate, formatNumber } = useLanguage()
   const { parts, outbound, addOutbound, updateOutbound } = useAppStore()
@@ -106,6 +129,10 @@ export default function OutboundPage() {
                   <div className='py-2 px-1'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{isId ? 'Dikirim' : 'Sup'}</p><p className='mt-1 font-semibold text-[var(--text)]'>{formatNumber(item.qtySupply)}</p></div>
                   <div className='py-2 px-1'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>O/S</p><p className={`mt-1 font-semibold ${outstanding > 0 ? 'text-[var(--warning)]' : 'text-[var(--success)]'}`}>{formatNumber(outstanding)}</p></div>
                 </div>
+                <div className='mt-3 border-t border-[var(--border)] pt-3'>
+                  <p className='mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-subtle)]'>{t('outbound.documents')}</p>
+                  <DocumentReferenceList documents={item.documents} emptyLabel={t('outbound.noDocuments')} />
+                </div>
               </li>
             )
           })}
@@ -114,11 +141,10 @@ export default function OutboundPage() {
 
         {/* Desktop table */}
         <div className='hidden overflow-x-auto md:block'>
-          <table className='data-table min-w-[820px]'><caption className='sr-only'>{t('outbound.tableCaption')}</caption>
+          <table className='data-table min-w-[1080px]'><caption className='sr-only'>{t('outbound.tableCaption')}</caption>
             <thead><tr><th scope='col'>{t('outbound.dateRequester')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col'>{t('outbound.warehouseType')}</th><th scope='col' className='text-right'>{t('outbound.requestQty')}</th><th scope='col' className='text-right'>{t('outbound.supplyQty')}</th><th scope='col' className='text-right'>{t('outbound.outstanding')}</th><th scope='col'>{t('outbound.documents')}</th><th scope='col' className='text-right'>{t('outbound.action')}</th></tr></thead>
             <tbody>{filtered.map((item) => {
               const outstanding = Math.max(0, item.qtyRequest - item.qtySupply)
-              const documents = Object.entries(item.documents).filter(([, v]) => v).map(([k, v]) => `${k.toUpperCase()}: ${v}`).join(' · ')
               return (
                 <tr key={item.id}>
                   <td><p className='font-semibold text-[var(--text)]'>{formatDate(item.requestDate)}</p><p className='mt-1 text-xs text-[var(--text-muted)]'>{item.requester}</p></td>
@@ -127,7 +153,7 @@ export default function OutboundPage() {
                   <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyRequest)}</td>
                   <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtySupply)}</td>
                   <td className='text-right'>{outstanding > 0 ? <StatusBadge status='warning'>{formatNumber(outstanding)}</StatusBadge> : <StatusBadge status='ready'>0</StatusBadge>}</td>
-                  <td><p className='max-w-[220px] text-xs leading-5 text-[var(--text-muted)]'>{documents || '—'}</p></td>
+                  <td className='min-w-[260px]'><DocumentReferenceList documents={item.documents} emptyLabel={t('outbound.noDocuments')} /></td>
                   <td className='text-right'><Button variant='secondary' size='sm' onClick={() => openEdit(item)} ariaLabel={`${t('common.edit')} ${item.partNumber}`}><Pencil size={13} aria-hidden='true' />{t('common.edit')}</Button></td>
                 </tr>
               )
@@ -201,6 +227,10 @@ export default function OutboundPage() {
               <p className='font-semibold text-[var(--text)]'>{editTarget.partNumber}</p>
               <p className='mt-0.5 text-xs text-[var(--text-muted)]'>{parts.find(p => p.partNumber === editTarget.partNumber)?.description}</p>
               <p className='mt-1 text-xs text-[var(--text-subtle)]'>{formatDate(editTarget.requestDate)} — {editTarget.requester}</p>
+              <div className='mt-3 border-t border-[var(--border)] pt-3'>
+                <p className='mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-subtle)]'>{t('outbound.documents')}</p>
+                <DocumentReferenceList documents={editDraft.documents} emptyLabel={t('outbound.noDocuments')} />
+              </div>
             </div>
 
             <div aria-live='polite' className='grid grid-cols-3 divide-x divide-[var(--border)] rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] text-center'>
