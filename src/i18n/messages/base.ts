@@ -31,7 +31,7 @@ export const baseMessages = {
     'common.pending': 'Tertunda',
     'common.doneGr': 'GR selesai',
     'common.status': 'Status',
-    'common.actions': 'Tindakan',
+    'common.actions': 'Aksi',
     'common.date': 'Tanggal',
     'common.description': 'Deskripsi',
     'common.location': 'Lokasi',
