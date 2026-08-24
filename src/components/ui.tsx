@@ -34,7 +34,7 @@ const statusStyles = {
 } as const
 
 export function StatusBadge({ status, children }: { status: keyof typeof statusStyles; children: ReactNode; surface?: 'light' | 'adaptive' }) {
-  return <span className={cn('status-badge inline-flex min-h-6 items-center rounded-[5px] border px-2 py-0.5 text-[11px] font-semibold leading-4', statusStyles[status])}>{children}</span>
+  return <span className={cn('status-badge inline-flex min-h-6 items-center whitespace-nowrap rounded-[5px] border px-2 py-0.5 text-[11px] font-semibold leading-4', statusStyles[status])}>{children}</span>
 }
 
 export function FieldLabel({ htmlFor, children, required, hint }: { htmlFor: string; children: ReactNode; required?: boolean; hint?: string }) {

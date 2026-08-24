@@ -82,8 +82,6 @@ export default function InboundPage() {
   const totalDocument = inbound.reduce((total, item) => total + item.qtyMatdoc, 0)
   const totalActual = inbound.reduce((total, item) => total + item.qtyActual, 0)
   const pendingGr = inbound.filter((item) => item.grStatus !== 'Done GR').length
-  const isId = language === 'id'
-
   const renderDifference = (qtyMatdoc: number, qtyActual: number) => {
     const difference = qtyActual - qtyMatdoc
     const differenceLabel = difference === 0
@@ -169,7 +167,10 @@ export default function InboundPage() {
                   <p className='truncate font-semibold text-[var(--text)]'>{item.partNumber}</p>
                   <p className='mt-0.5 text-xs text-[var(--text-muted)]'>{formatDate(item.receivedDate)}</p>
                 </div>
-                {item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1' />{t('common.doneGr')}</StatusBadge> : <Button variant='secondary' size='sm' onClick={() => openGrEdit(item)}>{isId ? 'Konfirmasi GR' : 'Confirm GR'}</Button>}
+                <div className='flex shrink-0 items-center gap-2'>
+                  {item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1' />{t('common.doneGr')}</StatusBadge> : <StatusBadge status='warning'>{t('common.pending')}</StatusBadge>}
+                  <IconButton variant='secondary' label={`${t('common.edit')} GR ${item.partNumber}`} onClick={() => openGrEdit(item)}><Pencil size={14} aria-hidden='true' /></IconButton>
+                </div>
               </div>
               <div className='mt-3 grid grid-cols-3 divide-x divide-[var(--border)] rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] text-center'>
                 <div className='px-1 py-2'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{t('inbound.documentQty')}</p><p className='mt-1 font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</p></div>
@@ -196,13 +197,13 @@ export default function InboundPage() {
             <thead>
               <tr>
                 <th scope='col' className='w-[120px]'>{t('inbound.receivedDate')}</th>
-                <th scope='col' className='w-[220px]'>{t('common.partNumber')}</th>
-                <th scope='col' className='w-[100px] text-right'>{t('inbound.documentQty')}</th>
-                <th scope='col' className='w-[100px] text-right'>{t('inbound.actualQty')}</th>
-                <th scope='col' className='w-[100px] text-right'>{t('inbound.differenceLabel')}</th>
+                <th scope='col' className='w-[200px]'>{t('common.partNumber')}</th>
+                <th scope='col' className='w-[90px] text-right'>{t('inbound.documentQty')}</th>
+                <th scope='col' className='w-[90px] text-right'>{t('inbound.actualQty')}</th>
+                <th scope='col' className='w-[90px] text-right'>{t('inbound.differenceLabel')}</th>
                 <th scope='col' className='w-[220px]'>{t('inbound.references')}</th>
                 <th scope='col'>{t('inbound.notes')}</th>
-                <th scope='col' className='w-[110px]'>{t('inbound.grStatus')}</th>
+                <th scope='col' className='w-[120px]'>{t('inbound.grStatus')}</th>
                 <th scope='col' className='w-[64px] text-right'>{t('common.actions')}</th>
               </tr>
             </thead>
@@ -222,7 +223,7 @@ export default function InboundPage() {
                     <td className='text-right'>{renderDifference(item.qtyMatdoc, item.qtyActual)}</td>
                     <td><InboundReferenceList matdocNumber={item.matdocNumber} poNumber={item.poNumber} spbNumber={item.spbNumber} invoiceOrTo={item.invoiceOrTo} source={item.source} emptyLabel={t('inbound.noReferences')} /></td>
                     <td><NotesPreview notes={item.notes} emptyLabel={t('inbound.noNotes')} /></td>
-                    <td>{item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1.5' />{t('common.doneGr')}</StatusBadge> : <StatusBadge status='warning'>{t('common.pending')}</StatusBadge>}</td>
+                    <td className='whitespace-nowrap'>{item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1.5' />{t('common.doneGr')}</StatusBadge> : <StatusBadge status='warning'>{t('common.pending')}</StatusBadge>}</td>
                     <td><div className='flex justify-end'><IconButton variant='secondary' label={`${t('common.edit')} GR ${item.partNumber}`} onClick={() => openGrEdit(item)}><Pencil size={14} aria-hidden='true' /></IconButton></div></td>
                   </tr>
                 )
