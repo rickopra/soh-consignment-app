@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Pagination } from '../components/Pagination'
 import { ArrowUpFromLine, MessageSquareText, Pencil, Plus, Search } from 'lucide-react'
 import { useLanguage } from '../i18n/useLanguage'
@@ -6,7 +6,7 @@ import { localizedError } from '../lib/localizedError'
 import { useAppStore, defaultOutboundDraft } from '../store/appStore'
 import type { OutboundDocuments, OutboundTransaction, OutboundUpdate, WarehouseType } from '../types'
 import { useToast } from '../components/toast'
-import { Button, Drawer, FormDivider, FormError, FormRow, NumberField, SectionHeader, SelectField, StatusBadge, TextAreaField, TextField } from '../components/ui'
+import { Button, Drawer, FormDivider, FormError, FormRow, IconButton, NumberField, SectionHeader, SelectField, StatusBadge, TextAreaField, TextField } from '../components/ui'
 
 const warehouseOptions: Array<{ value: WarehouseType; label: string }> = [
   { value: 'Consignment', label: 'Consignment' },
@@ -83,7 +83,7 @@ export default function OutboundPage() {
   const currentPart = partByNumber.get(draft.partNumber)
   const needsDocuments = draft.warehouseType !== 'Warehouse Store'
   const [page, setPage] = useState(1)
-  const itemsPerPage = 20
+  const [itemsPerPage, setItemsPerPage] = useState(20)
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
     return outbound.filter((item) => {
@@ -94,16 +94,12 @@ export default function OutboundPage() {
     })
   }, [effectiveModelFilter, outbound, partByNumber, search])
   const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const pagedItems = useMemo(() => filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage), [filtered, page])
+  const safePage = Math.min(page, Math.max(1, totalPages))
+  const pagedItems = useMemo(() => filtered.slice((safePage - 1) * itemsPerPage, safePage * itemsPerPage), [filtered, itemsPerPage, safePage])
   const totalRequested = outbound.reduce((total, item) => total + item.qtyRequest, 0)
   const totalSupplied = outbound.reduce((total, item) => total + item.qtySupply, 0)
   const totalOutstanding = outbound.reduce((total, item) => total + Math.max(0, item.qtyRequest - item.qtySupply), 0)
   const editOutstanding = editDraft ? Math.max(0, editDraft.qtyRequest - editDraft.qtySupply) : 0
-
-  useEffect(() => setPage(1), [effectiveModelFilter, search])
-  useEffect(() => {
-    if (page > Math.max(1, totalPages)) setPage(Math.max(1, totalPages))
-  }, [page, totalPages])
 
   const updateDocument = (key: keyof OutboundDocuments, value: string) => setDraft((current) => ({ ...current, documents: { ...current.documents, [key]: value } }))
   const updateEditDocument = (key: keyof OutboundDocuments, value: string) => setEditDraft((current) => ({ ...current, documents: { ...current.documents, [key]: value } }))
@@ -153,13 +149,13 @@ export default function OutboundPage() {
           <div className='relative'>
             <label htmlFor='outbound-search' className='sr-only'>{t('outbound.searchLabel')}</label>
             <Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' />
-            <input id='outbound-search' type='search' placeholder={t('outbound.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} className='min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' />
+            <input id='outbound-search' type='search' placeholder={t('outbound.searchPlaceholder')} value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} className='min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' />
           </div>
-          <SelectField id='outbound-model-filter' label={t('common.modelFilter')} value={effectiveModelFilter} onChange={setModelFilter} options={modelFilterOptions} variant='surface' />
+          <SelectField id='outbound-model-filter' label={t('common.modelFilter')} value={effectiveModelFilter} onChange={(value) => { setModelFilter(value); setPage(1) }} options={modelFilterOptions} variant='surface' />
         </div>
 
         {/* Mobile cards */}
-        <ul className='divide-y divide-[var(--border)] md:hidden'>
+        <ul className='divide-y divide-[var(--border)] xl:hidden'>
           {pagedItems.map((item) => {
             const outstanding = Math.max(0, item.qtyRequest - item.qtySupply)
             return (
@@ -191,9 +187,19 @@ export default function OutboundPage() {
         </ul>
 
         {/* Desktop table */}
-        <div className='hidden overflow-x-auto md:block'>
-          <table className='data-table min-w-[1260px]'><caption className='sr-only'>{t('outbound.tableCaption')}</caption>
-            <thead><tr><th scope='col'>{t('outbound.dateRequester')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col'>{t('outbound.warehouseType')}</th><th scope='col' className='text-right'>{t('outbound.requestQty')}</th><th scope='col' className='text-right'>{t('outbound.supplyQty')}</th><th scope='col' className='text-right'>{t('outbound.outstanding')}</th><th scope='col'>{t('outbound.documents')}</th><th scope='col'>{t('outbound.notes')}</th><th scope='col' className='text-right'>{t('outbound.action')}</th></tr></thead>
+        <div className='hidden xl:block'>
+          <table className='data-table w-full table-fixed'><caption className='sr-only'>{t('outbound.tableCaption')}</caption>
+            <thead><tr>
+              <th scope='col' className='w-[140px]'>{t('outbound.dateRequester')}</th>
+              <th scope='col' className='w-[160px]'>{t('common.partNumber')}</th>
+              <th scope='col' className='w-[120px]'>{t('outbound.warehouseType')}</th>
+              <th scope='col' className='w-[80px] text-right'>{t('outbound.requestQty')}</th>
+              <th scope='col' className='w-[80px] text-right'>{t('outbound.supplyQty')}</th>
+              <th scope='col' className='w-[80px] text-right'>{t('outbound.outstanding')}</th>
+              <th scope='col' className='w-[180px]'>{t('outbound.documents')}</th>
+              <th scope='col'>{t('outbound.notes')}</th>
+              <th scope='col' className='w-[64px] text-right'>{t('outbound.action')}</th>
+            </tr></thead>
             <tbody>{pagedItems.map((item) => {
               const outstanding = Math.max(0, item.qtyRequest - item.qtySupply)
               return (
@@ -204,15 +210,15 @@ export default function OutboundPage() {
                   <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyRequest)}</td>
                   <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtySupply)}</td>
                   <td className='text-right'>{outstanding > 0 ? <StatusBadge status='warning'>{formatNumber(outstanding)}</StatusBadge> : <StatusBadge status='ready'>0</StatusBadge>}</td>
-                  <td className='min-w-[260px]'><DocumentReferenceList documents={item.documents} emptyLabel={t('outbound.noDocuments')} /></td>
-                  <td className='min-w-[220px]'><NotesPreview notes={item.notes} emptyLabel={t('outbound.noNotes')} /></td>
-                  <td className='text-right'><Button variant='secondary' size='sm' onClick={() => openEdit(item)} ariaLabel={`${t('common.edit')} ${item.partNumber}`}><Pencil size={13} aria-hidden='true' />{t('common.edit')}</Button></td>
+                  <td><DocumentReferenceList documents={item.documents} emptyLabel={t('outbound.noDocuments')} /></td>
+                  <td><NotesPreview notes={item.notes} emptyLabel={t('outbound.noNotes')} /></td>
+                  <td><div className='flex justify-end'><IconButton variant='secondary' label={`${t('common.edit')} ${item.partNumber}`} onClick={() => openEdit(item)}><Pencil size={14} aria-hidden='true' /></IconButton></div></td>
                 </tr>
               )
             })}{filtered.length === 0 && <tr><td colSpan={9} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('outbound.noData')}</td></tr>}</tbody>
           </table>
         </div>
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+        <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} itemsPerPage={itemsPerPage} onItemsPerPageChange={(value) => { setItemsPerPage(value); setPage(1) }} />
       </section>
 
       {/* New Outbound Drawer */}

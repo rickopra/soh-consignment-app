@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Pagination } from '../components/Pagination'
 import { ArrowDownToLine, CheckCircle2, MessageSquareText, Pencil, Plus, Search } from 'lucide-react'
 import { useToast } from '../components/toast'
-import { Button, Drawer, FormDivider, FormError, FormRow, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextAreaField, TextField } from '../components/ui'
+import { Button, Drawer, FormDivider, FormError, FormRow, IconButton, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextAreaField, TextField } from '../components/ui'
 import { useLanguage } from '../i18n/useLanguage'
 import { localizedError } from '../lib/localizedError'
 import { defaultInboundDraft, useAppStore } from '../store/appStore'
@@ -66,7 +66,7 @@ export default function InboundPage() {
   const effectiveModelFilter = modelFilter === 'ALL' || modelValues.includes(modelFilter) ? modelFilter : 'ALL'
   const currentPart = partByNumber.get(draft.partNumber)
   const [page, setPage] = useState(1)
-  const itemsPerPage = 20
+  const [itemsPerPage, setItemsPerPage] = useState(20)
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
     return inbound.filter((item) => {
@@ -77,16 +77,12 @@ export default function InboundPage() {
     })
   }, [effectiveModelFilter, inbound, partByNumber, search])
   const totalPages = Math.ceil(filtered.length / itemsPerPage)
-  const pagedItems = useMemo(() => filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage), [filtered, page])
+  const safePage = Math.min(page, Math.max(1, totalPages))
+  const pagedItems = useMemo(() => filtered.slice((safePage - 1) * itemsPerPage, safePage * itemsPerPage), [filtered, itemsPerPage, safePage])
   const totalDocument = inbound.reduce((total, item) => total + item.qtyMatdoc, 0)
   const totalActual = inbound.reduce((total, item) => total + item.qtyActual, 0)
   const pendingGr = inbound.filter((item) => item.grStatus !== 'Done GR').length
   const isId = language === 'id'
-
-  useEffect(() => setPage(1), [effectiveModelFilter, search])
-  useEffect(() => {
-    if (page > Math.max(1, totalPages)) setPage(Math.max(1, totalPages))
-  }, [page, totalPages])
 
   const renderDifference = (qtyMatdoc: number, qtyActual: number) => {
     const difference = qtyActual - qtyMatdoc
@@ -159,13 +155,13 @@ export default function InboundPage() {
           <div className='relative'>
             <label htmlFor='inbound-search' className='sr-only'>{t('inbound.searchLabel')}</label>
             <Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' />
-            <input id='inbound-search' type='search' placeholder={t('inbound.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} className='min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' />
+            <input id='inbound-search' type='search' placeholder={t('inbound.searchPlaceholder')} value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} className='min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' />
           </div>
-          <SelectField id='inbound-model-filter' label={t('common.modelFilter')} value={effectiveModelFilter} onChange={setModelFilter} options={modelFilterOptions} variant='surface' />
+          <SelectField id='inbound-model-filter' label={t('common.modelFilter')} value={effectiveModelFilter} onChange={(value) => { setModelFilter(value); setPage(1) }} options={modelFilterOptions} variant='surface' />
         </div>
 
         {/* Mobile cards */}
-        <ul className='divide-y divide-[var(--border)] md:hidden'>
+        <ul className='divide-y divide-[var(--border)] xl:hidden'>
           {pagedItems.map((item) => (
             <li key={item.id} className='p-4'>
               <div className='flex items-start justify-between gap-2'>
@@ -194,20 +190,20 @@ export default function InboundPage() {
         </ul>
 
         {/* Desktop table */}
-        <div className='hidden overflow-x-auto md:block'>
-          <table className='data-table min-w-[1380px]'>
+        <div className='hidden xl:block'>
+          <table className='data-table w-full table-fixed'>
             <caption className='sr-only'>{t('inbound.tableCaption')}</caption>
             <thead>
               <tr>
-                <th scope='col'>{t('inbound.receivedDate')}</th>
-                <th scope='col'>{t('common.partNumber')}</th>
-                <th scope='col' className='text-right'>{t('inbound.documentQty')}</th>
-                <th scope='col' className='text-right'>{t('inbound.actualQty')}</th>
-                <th scope='col' className='text-right'>{t('inbound.differenceLabel')}</th>
-                <th scope='col'>{t('inbound.references')}</th>
+                <th scope='col' className='w-[120px]'>{t('inbound.receivedDate')}</th>
+                <th scope='col' className='w-[220px]'>{t('common.partNumber')}</th>
+                <th scope='col' className='w-[100px] text-right'>{t('inbound.documentQty')}</th>
+                <th scope='col' className='w-[100px] text-right'>{t('inbound.actualQty')}</th>
+                <th scope='col' className='w-[100px] text-right'>{t('inbound.differenceLabel')}</th>
+                <th scope='col' className='w-[220px]'>{t('inbound.references')}</th>
                 <th scope='col'>{t('inbound.notes')}</th>
-                <th scope='col'>{t('inbound.grStatus')}</th>
-                <th scope='col' className='text-right'>{t('common.actions')}</th>
+                <th scope='col' className='w-[110px]'>{t('inbound.grStatus')}</th>
+                <th scope='col' className='w-[64px] text-right'>{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -224,10 +220,10 @@ export default function InboundPage() {
                     <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</td>
                     <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</td>
                     <td className='text-right'>{renderDifference(item.qtyMatdoc, item.qtyActual)}</td>
-                    <td className='min-w-[280px]'><InboundReferenceList matdocNumber={item.matdocNumber} poNumber={item.poNumber} spbNumber={item.spbNumber} invoiceOrTo={item.invoiceOrTo} source={item.source} emptyLabel={t('inbound.noReferences')} /></td>
+                    <td><InboundReferenceList matdocNumber={item.matdocNumber} poNumber={item.poNumber} spbNumber={item.spbNumber} invoiceOrTo={item.invoiceOrTo} source={item.source} emptyLabel={t('inbound.noReferences')} /></td>
                     <td><NotesPreview notes={item.notes} emptyLabel={t('inbound.noNotes')} /></td>
                     <td>{item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1.5' />{t('common.doneGr')}</StatusBadge> : <StatusBadge status='warning'>{t('common.pending')}</StatusBadge>}</td>
-                    <td className='text-right'><Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('common.edit')} GR ${item.partNumber}`}><Pencil size={13} aria-hidden='true' />{t('common.edit')}</Button></td>
+                    <td><div className='flex justify-end'><IconButton variant='secondary' label={`${t('common.edit')} GR ${item.partNumber}`} onClick={() => openGrEdit(item)}><Pencil size={14} aria-hidden='true' /></IconButton></div></td>
                   </tr>
                 )
               })}
@@ -235,7 +231,7 @@ export default function InboundPage() {
             </tbody>
           </table>
         </div>
-        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+        <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} itemsPerPage={itemsPerPage} onItemsPerPageChange={(value) => { setItemsPerPage(value); setPage(1) }} />
       </section>
 
       {/* New Inbound Drawer */}
