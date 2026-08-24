@@ -55,7 +55,44 @@ export function NumberField({ id, label, value, onChange, min = 0, max, required
 }
 
 export function SelectField({ id, label, value, onChange, options, required, hint, disabled }: { id: string; label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }>; required?: boolean; hint?: string; disabled?: boolean }) {
-  return <div><FieldLabel htmlFor={id} required={required} hint={hint}>{label}</FieldLabel><div className='relative'><select id={id} value={value} onChange={(event) => onChange(event.target.value)} required={required} disabled={disabled} className={cn(fieldBase, 'appearance-none pr-6')}>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><ChevronDown className='pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' size={14} aria-hidden='true' /></div></div>
+  const [open, setOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null)
+  
+  useEffect(() => {
+    if (!open) return
+    const rect = triggerRef.current?.getBoundingClientRect()
+    if (rect) setPosition({ top: rect.bottom + 4, left: rect.left, width: rect.width })
+    const handler = (e: MouseEvent | TouchEvent) => {
+      if (!triggerRef.current?.contains(e.target as Node) && !panelRef.current?.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler)
+    const resize = () => setOpen(false)
+    window.addEventListener('resize', resize)
+    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('touchstart', handler); window.removeEventListener('resize', resize) }
+  }, [open])
+
+  const selectedOption = options.find(o => o.value === value)
+
+  return <div className='flex flex-col'>{label && <FieldLabel htmlFor={id} required={required} hint={hint}>{label}</FieldLabel>}<div className='relative'>
+    <button ref={triggerRef} type="button" disabled={disabled} onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open} className={cn(fieldBase, 'flex items-center justify-between text-left')}>
+      <span className={selectedOption ? 'text-[var(--text)] truncate block' : 'text-[var(--text-subtle)] truncate block'}>{selectedOption?.label || ''}</span>
+      <ChevronDown className='pointer-events-none shrink-0 text-[var(--text-muted)]' size={14} aria-hidden='true' />
+    </button>
+    {open && position && createPortal(
+      <div ref={panelRef} role="listbox" className='fixed z-[70] overflow-y-auto max-h-[300px] rounded-[12px] border border-[var(--border)] bg-[var(--surface-raised)] shadow-xl' style={{ top: position.top, left: position.left, width: position.width }}>
+        {options.map((option) => (
+          <button key={option.value} role="option" aria-selected={value === option.value} type="button" className={cn('w-full text-left px-4 py-2 text-sm transition-colors focus:outline-none', value === option.value ? 'bg-[var(--brand-orange)] font-semibold text-white' : 'text-[var(--text)] hover:bg-[var(--surface-muted)]')} onClick={() => { onChange(option.value); setOpen(false); triggerRef.current?.focus() }}>
+            {option.label}
+          </button>
+        ))}
+      </div>, document.body
+    )}
+  </div></div>
 }
 
 export function TextAreaField({ id, label, value, onChange, placeholder, hint, rows = 3, disabled }: { id: string; label: string; value: string; onChange: (value: string) => void; placeholder?: string; hint?: string; rows?: number; disabled?: boolean }) {
@@ -225,4 +262,7 @@ export function LoadingState() {
   const { t } = useLanguage()
   return <div className='flex min-h-48 items-center justify-center gap-3 text-sm text-[var(--text-muted)]'><LoaderCircle className='animate-spin' size={19} aria-hidden='true' /><span>{t('common.loading')}</span></div>
 }
+
+
+
 
