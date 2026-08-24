@@ -149,7 +149,7 @@ export default function InboundPage() {
         {/* Desktop table */}
         <div className='hidden overflow-x-auto md:block'>
           <table className='data-table min-w-[1260px]'><caption className='sr-only'>{t('inbound.tableCaption')}</caption>
-            <thead><tr><th scope='col'>{t('inbound.receivedDate')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col' className='text-right'>{t('inbound.documentQty')}</th><th scope='col' className='text-right'>{t('inbound.actualQty')}</th><th scope='col' className='text-right'>{isId ? 'Selisih' : 'Diff'}</th><th scope='col'>{t('inbound.references')}</th><th scope='col'>{t('inbound.notes')}</th><th scope='col'>{t('inbound.grStatus')}</th><th scope='col' className='text-right'>{t('common.actions')}</th></tr></thead>
+            <thead><tr><th scope='col'>{t('inbound.receivedDate')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col' className='text-right'>{t('inbound.documentQty')}</th><th scope='col' className='text-right'>{t('inbound.actualQty')}</th><th scope='col' className='text-right'>{t('inbound.difference', {count: ''}).replace(' unit', '').trim() || (isId ? 'Selisih' : 'Diff')}</th><th scope='col'>{t('inbound.references')}</th><th scope='col'>{t('inbound.notes')}</th><th scope='col'>{t('inbound.grStatus')}</th><th scope='col' className='text-right'>{t('common.actions')}</th></tr></thead>
             <tbody>{filtered.map((item) => {
               const refs = [item.matdocNumber ? `Matdoc: ${item.matdocNumber}` : null, item.poNumber ? `PO: ${item.poNumber}` : null, item.spbNumber ? `SPB: ${item.spbNumber}` : null].filter(Boolean).join(' Â· ')
               return (
@@ -163,7 +163,7 @@ export default function InboundPage() {
                   <td className='text-right'><Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('common.edit')} GR ${item.partNumber}`}><Pencil size={13} aria-hidden='true' />{t('common.edit')}</Button></td>
                 </tr>
               )
-            })}{filtered.length === 0 && <tr><td colSpan={8} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</td></tr>}</tbody>
+            })}{filtered.length === 0 && <tr><td colSpan={9} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</td></tr>}</tbody>
           </table>
         </div>
       </section>

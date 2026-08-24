@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react'
 import { AlertCircle, ChevronDown, Eye, EyeOff, LoaderCircle, X } from 'lucide-react'
 import { useLanguage } from '../i18n/useLanguage'
 import { cn } from '../lib/utils'
@@ -54,45 +54,157 @@ export function NumberField({ id, label, value, onChange, min = 0, max, required
   return <div><FieldLabel htmlFor={id} required={required} hint={hint}>{label}</FieldLabel><input id={id} type='number' value={value} onChange={(event) => onChange(Number(event.target.value))} min={min} max={max} required={required} disabled={disabled} className={fieldBase} /></div>
 }
 
-export function SelectField({ id, label, value, onChange, options, required, hint, disabled }: { id: string; label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }>; required?: boolean; hint?: string; disabled?: boolean }) {
+export function SelectField({ id, label, value, onChange, options, required, hint, disabled, variant = 'underline' }: { id: string; label?: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }>; required?: boolean; hint?: string; disabled?: boolean; variant?: 'underline' | 'surface' }) {
   const [open, setOpen] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [position, setPosition] = useState<{ top: number; left: number; width: number; maxHeight: number } | null>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
-  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null)
-  
+  const listboxId = useId()
+  const selectedIndex = options.findIndex((option) => option.value === value)
+  const selectedOption = selectedIndex >= 0 ? options[selectedIndex] : undefined
+
+  const calculatePosition = () => {
+    const rect = triggerRef.current?.getBoundingClientRect()
+    if (!rect) return null
+    const viewportPadding = 12
+    const availableWidth = Math.max(0, window.innerWidth - viewportPadding * 2)
+    const width = Math.min(Math.max(rect.width, 180), availableWidth)
+    const estimatedHeight = Math.min(Math.max(options.length * 42 + 8, 52), 320)
+    const roomBelow = window.innerHeight - rect.bottom - viewportPadding
+    const roomAbove = rect.top - viewportPadding
+    const openAbove = roomBelow < Math.min(estimatedHeight, 220) && roomAbove > roomBelow
+    const maxHeight = Math.max(120, Math.min(320, openAbove ? roomAbove - 8 : roomBelow - 8))
+    const top = openAbove ? Math.max(viewportPadding, rect.top - Math.min(estimatedHeight, maxHeight) - 6) : rect.bottom + 6
+    const left = Math.min(Math.max(viewportPadding, rect.left), Math.max(viewportPadding, window.innerWidth - width - viewportPadding))
+    return { top, left, width, maxHeight }
+  }
+
+  const focusOption = (index: number) => {
+    window.requestAnimationFrame(() => panelRef.current?.querySelectorAll<HTMLButtonElement>('[role="option"]')[index]?.focus())
+  }
+
+  const openMenu = (index = selectedIndex >= 0 ? selectedIndex : 0) => {
+    if (disabled || options.length === 0) return
+    setPosition(calculatePosition())
+    setActiveIndex(Math.min(Math.max(index, 0), options.length - 1))
+    setOpen(true)
+  }
+
+  const closeMenu = (restoreFocus = true) => {
+    setOpen(false)
+    if (restoreFocus) window.requestAnimationFrame(() => triggerRef.current?.focus())
+  }
+
+  const chooseOption = (index: number) => {
+    const option = options[index]
+    if (!option) return
+    onChange(option.value)
+    closeMenu()
+  }
+
+  const moveOption = (nextIndex: number) => {
+    const normalizedIndex = (nextIndex + options.length) % options.length
+    setActiveIndex(normalizedIndex)
+    focusOption(normalizedIndex)
+  }
+
   useEffect(() => {
     if (!open) return
-    const rect = triggerRef.current?.getBoundingClientRect()
-    if (rect) setPosition({ top: rect.bottom + 4, left: rect.left, width: rect.width })
-    const handler = (e: MouseEvent | TouchEvent) => {
-      if (!triggerRef.current?.contains(e.target as Node) && !panelRef.current?.contains(e.target as Node)) {
-        setOpen(false)
-      }
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (!triggerRef.current?.contains(target) && !panelRef.current?.contains(target)) closeMenu(false)
     }
-    document.addEventListener('mousedown', handler)
-    document.addEventListener('touchstart', handler)
-    const resize = () => setOpen(false)
-    window.addEventListener('resize', resize)
-    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('touchstart', handler); window.removeEventListener('resize', resize) }
+    const updatePosition = () => setPosition(calculatePosition())
+    document.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    focusOption(activeIndex)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
   }, [open])
 
-  const selectedOption = options.find(o => o.value === value)
+  const handleTriggerKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      openMenu(event.key === 'ArrowUp' && selectedIndex < 0 ? options.length - 1 : selectedIndex >= 0 ? selectedIndex : 0)
+    }
+  }
 
-  return <div className='flex flex-col'>{label && <FieldLabel htmlFor={id} required={required} hint={hint}>{label}</FieldLabel>}<div className='relative'>
-    <button ref={triggerRef} type="button" disabled={disabled} onClick={() => setOpen(!open)} aria-haspopup="listbox" aria-expanded={open} className={cn(fieldBase, 'flex items-center justify-between text-left')}>
-      <span className={selectedOption ? 'text-[var(--text)] truncate block' : 'text-[var(--text-subtle)] truncate block'}>{selectedOption?.label || ''}</span>
-      <ChevronDown className='pointer-events-none shrink-0 text-[var(--text-muted)]' size={14} aria-hidden='true' />
-    </button>
-    {open && position && createPortal(
-      <div ref={panelRef} role="listbox" className='fixed z-[70] overflow-y-auto max-h-[300px] rounded-[12px] border border-[var(--border)] bg-[var(--surface-raised)] shadow-xl' style={{ top: position.top, left: position.left, width: position.width }}>
-        {options.map((option) => (
-          <button key={option.value} role="option" aria-selected={value === option.value} type="button" className={cn('w-full text-left px-4 py-2 text-sm transition-colors focus:outline-none', value === option.value ? 'bg-[var(--brand-orange)] font-semibold text-white' : 'text-[var(--text)] hover:bg-[var(--surface-muted)]')} onClick={() => { onChange(option.value); setOpen(false); triggerRef.current?.focus() }}>
-            {option.label}
-          </button>
-        ))}
-      </div>, document.body
-    )}
-  </div></div>
+  const handleOptionKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === 'ArrowDown') { event.preventDefault(); moveOption(index + 1) }
+    else if (event.key === 'ArrowUp') { event.preventDefault(); moveOption(index - 1) }
+    else if (event.key === 'Home') { event.preventDefault(); moveOption(0) }
+    else if (event.key === 'End') { event.preventDefault(); moveOption(options.length - 1) }
+    else if (event.key === 'Escape') { event.preventDefault(); closeMenu() }
+    else if (event.key === 'Tab') closeMenu(false)
+  }
+
+  return (
+    <div className='flex min-w-0 flex-col'>
+      {label && <FieldLabel htmlFor={id} required={required} hint={hint}>{label}</FieldLabel>}
+      <button
+        ref={triggerRef}
+        id={id}
+        type='button'
+        disabled={disabled}
+        aria-haspopup='listbox'
+        aria-expanded={open}
+        aria-controls={open ? listboxId : undefined}
+        aria-required={required}
+        onClick={() => open ? closeMenu(false) : openMenu()}
+        onKeyDown={handleTriggerKeyDown}
+        className={cn(
+          variant === 'surface'
+            ? 'min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text)] outline-none transition-[border-color,box-shadow,background-color] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10'
+            : fieldBase,
+          'flex items-center justify-between gap-3 text-left',
+          open && 'border-[var(--brand-orange)]',
+        )}
+      >
+        <span className={cn('min-w-0 flex-1 truncate', selectedOption ? 'text-[var(--text)]' : 'text-[var(--text-subtle)]')}>{selectedOption?.label ?? '?'}</span>
+        <ChevronDown className={cn('shrink-0 text-[var(--text-muted)] transition-transform duration-150', open && 'rotate-180')} size={15} aria-hidden='true' />
+      </button>
+      {open && position && createPortal(
+        <div
+          ref={panelRef}
+          id={listboxId}
+          role='listbox'
+          aria-labelledby={label ? id : undefined}
+          className='fixed z-[80] overflow-y-auto rounded-[10px] border border-[var(--border-strong)] bg-[var(--surface-raised)] p-1.5 shadow-[0_18px_48px_rgba(7,19,29,0.24)]'
+          style={{ top: position.top, left: position.left, width: position.width, maxHeight: position.maxHeight }}
+        >
+          {options.map((option, index) => {
+            const selected = value === option.value
+            const active = activeIndex === index
+            return (
+              <button
+                key={option.value}
+                type='button'
+                role='option'
+                tabIndex={active ? 0 : -1}
+                aria-selected={selected}
+                onMouseMove={() => setActiveIndex(index)}
+                onFocus={() => setActiveIndex(index)}
+                onKeyDown={(event) => handleOptionKeyDown(event, index)}
+                onClick={() => chooseOption(index)}
+                className={cn(
+                  'flex min-h-10 w-full items-center rounded-[7px] px-3 text-left text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--focus)]',
+                  selected ? 'bg-[var(--brand-blue)] font-semibold text-white' : active ? 'bg-[var(--surface-muted)] text-[var(--text)]' : 'text-[var(--text)] hover:bg-[var(--surface-muted)]',
+                )}
+              >
+                <span className='truncate'>{option.label}</span>
+              </button>
+            )
+          })}
+        </div>,
+        document.body,
+      )}
+    </div>
+  )
 }
 
 export function TextAreaField({ id, label, value, onChange, placeholder, hint, rows = 3, disabled }: { id: string; label: string; value: string; onChange: (value: string) => void; placeholder?: string; hint?: string; rows?: number; disabled?: boolean }) {
@@ -262,7 +374,3 @@ export function LoadingState() {
   const { t } = useLanguage()
   return <div className='flex min-h-48 items-center justify-center gap-3 text-sm text-[var(--text-muted)]'><LoaderCircle className='animate-spin' size={19} aria-hidden='true' /><span>{t('common.loading')}</span></div>
 }
-
-
-
-
