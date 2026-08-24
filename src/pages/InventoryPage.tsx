@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pagination } from '../components/Pagination'
 import { Download, FileDiff, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useToast } from '../components/toast'
@@ -56,10 +56,34 @@ export default function InventoryPage() {
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StockFilter>('ALL')
-  const [page, setPage] = useState(1); const itemsPerPage = 20; const filtered = useMemo(() => {
+  const [modelFilter, setModelFilter] = useState('ALL')
+  const modelValues = useMemo(
+    () => Array.from(new Set(inventory.map((item) => item.model.trim()).filter(Boolean))).sort((left, right) => left.localeCompare(right)),
+    [inventory],
+  )
+  const modelFilterOptions = useMemo(
+    () => [{ value: 'ALL', label: t('common.allModels') }, ...modelValues.map((model) => ({ value: model, label: model }))],
+    [modelValues, t],
+  )
+  const effectiveModelFilter = modelFilter === 'ALL' || modelValues.includes(modelFilter) ? modelFilter : 'ALL'
+  const [page, setPage] = useState(1)
+  const itemsPerPage = 20
+  const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
-    return inventory.filter((item) => `${item.partNumber} ${item.model} ${item.description} ${item.location}`.toLowerCase().includes(query) && (statusFilter === 'ALL' || item.status === statusFilter))
-  }, [inventory, search, statusFilter])
+    return inventory.filter((item) => {
+      const matchesSearch = `${item.partNumber} ${item.model} ${item.description} ${item.location}`.toLowerCase().includes(query)
+      const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter
+      const matchesModel = effectiveModelFilter === 'ALL' || item.model === effectiveModelFilter
+      return matchesSearch && matchesStatus && matchesModel
+    })
+  }, [effectiveModelFilter, inventory, search, statusFilter])
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const pagedItems = useMemo(() => filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage), [filtered, page])
+
+  useEffect(() => setPage(1), [effectiveModelFilter, search, statusFilter])
+  useEffect(() => {
+    if (page > Math.max(1, totalPages)) setPage(Math.max(1, totalPages))
+  }, [page, totalPages])
 
   // Part CRUD modal state
   const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null)
@@ -198,13 +222,21 @@ export default function InventoryPage() {
         }
       />
       <section className='app-panel overflow-hidden' aria-labelledby='inventory-table-title'>
-        <div className='flex flex-col gap-4 border-b border-[var(--border)] p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between'>
-          <div className='relative w-full max-w-xl'><label htmlFor='inventory-search' className='sr-only'>{t('inventory.searchLabel')}</label><Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' /><input id='inventory-search' type='search' placeholder={t('inventory.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} className='min-h-11 w-full rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' /></div>
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-center'><p id='inventory-table-title' className='whitespace-nowrap text-xs font-medium text-[var(--text-muted)]'>{t('inventory.resultCount', { count: formatNumber(filtered.length) })}</p><div className='inline-flex border border-[var(--border-strong)] bg-[var(--surface-muted)] p-1' role='group' aria-label={t('inventory.filterLabel')}>{filters.map((filter) => <button key={filter.value} type='button' onClick={() => setStatusFilter(filter.value)} className={`min-h-8 px-3 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] ${statusFilter === filter.value ? 'bg-[var(--brand-blue)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]'}`} aria-pressed={statusFilter === filter.value}>{filter.label}</button>)}</div></div>
+        <div className='grid gap-4 border-b border-[var(--border)] p-4 sm:p-5 xl:grid-cols-[minmax(0,1fr)_240px_auto] xl:items-end'>
+          <div className='relative w-full'>
+            <label htmlFor='inventory-search' className='sr-only'>{t('inventory.searchLabel')}</label>
+            <Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' />
+            <input id='inventory-search' type='search' placeholder={t('inventory.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} className='min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' />
+          </div>
+          <SelectField id='inventory-model-filter' label={t('common.modelFilter')} value={effectiveModelFilter} onChange={setModelFilter} options={modelFilterOptions} variant='surface' />
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center'>
+            <p id='inventory-table-title' className='whitespace-nowrap text-xs font-medium text-[var(--text-muted)]'>{t('inventory.resultCount', { count: formatNumber(filtered.length) })}</p>
+            <div className='inline-flex border border-[var(--border-strong)] bg-[var(--surface-muted)] p-1' role='group' aria-label={t('inventory.filterLabel')}>{filters.map((filter) => <button key={filter.value} type='button' onClick={() => setStatusFilter(filter.value)} className={`min-h-8 px-3 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] ${statusFilter === filter.value ? 'bg-[var(--brand-blue)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--text)]'}`} aria-pressed={statusFilter === filter.value}>{filter.label}</button>)}</div>
+          </div>
         </div>
                 {/* Mobile card list ? hidden on md+ */}
         <ul className='divide-y divide-[var(--border)] md:hidden'>
-          {filtered.map((item) => (
+          {pagedItems.map((item) => (
             <li key={item.id} className='p-4'>
               <div className='flex items-start justify-between gap-3'>
                 <div className='min-w-0'>
@@ -239,8 +271,8 @@ export default function InventoryPage() {
         </ul>
 
         {/* Desktop table ? hidden on <md */}
-        <div className='hidden overflow-x-auto md:block'><table className='data-table min-w-[900px]'><caption className='sr-only'>{t('inventory.tableCaption')}</caption><thead><tr><th scope='col'>{t('inventory.partColumn')}</th><th scope='col'>{t('inventory.modelColumn')}</th><th scope='col'>{t('common.status')}</th><th scope='col' className='text-right'>{t('inventory.physicalStock')}</th><th scope='col' className='text-right'>{t('inventory.availableStock')}</th><th scope='col' className='text-right'>{t('inventory.minMax')}</th><th scope='col' className='text-right'>{t('inventory.refill')}</th>{isAdmin && <th scope='col' className='text-right'>{t('common.actions')}</th>}</tr></thead><tbody>{filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((item) => <tr key={item.id}><td><p className='font-semibold text-[var(--text)]'>{item.partNumber}</p><p className='mt-1 max-w-[320px] truncate text-xs text-[var(--text-muted)]' title={item.description}>{item.description}</p><p className='mt-1 text-[11px] text-[var(--text-subtle)]'>{item.location}</p></td><td><p className='text-sm text-[var(--text)]'>{item.model || <span className='text-[var(--text-subtle)]'>?</span>}</p></td><td><StatusBadge status={item.status === 'READY' ? 'ready' : 'danger'}>{item.status === 'READY' ? t('common.ready') : t('common.notReady')}</StatusBadge></td><td className='text-right'><p className='font-semibold text-[var(--text)]'>{formatNumber(item.physicalStock)}</p><p className='mt-1 text-[10px] text-[var(--text-subtle)]'>{t('inventory.actual')}</p></td><td className='text-right'><p className='font-semibold text-[var(--text)]'>{formatNumber(item.availableStock)}</p><p className='mt-1 text-[10px] text-[var(--text-subtle)]'>{t('inventory.afterRequest')}</p></td><td className='text-right text-[var(--text-muted)]'>{formatNumber(item.minStock)} / {formatNumber(item.maxStock)}</td><td className='text-right'>{item.refillRecommendation > 0 ? <span className='font-semibold text-[var(--brand-blue)]'>+{formatNumber(item.refillRecommendation)}</span> : <span className='text-[var(--text-subtle)]'>?</span>}</td>{isAdmin && <td className='text-right'><div className='inline-flex gap-1'><Button variant='secondary' size='sm' onClick={() => openEdit(item)} ariaLabel={`${t('common.edit')} ${item.partNumber}`}><Pencil size={14} aria-hidden='true' /></Button><Button variant='danger' size='sm' onClick={() => setConfirmDelete(item)} ariaLabel={`${t('common.delete')} ${item.partNumber}`}><Trash2 size={14} aria-hidden='true' /></Button></div></td>}</tr>)}{filtered.length === 0 && <tr><td colSpan={isAdmin ? 8 : 7} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inventory.noMatch')}</td></tr>}</tbody></table></div>
-        <Pagination currentPage={page} totalPages={Math.ceil(filtered.length / itemsPerPage)} onPageChange={setPage} />
+        <div className='hidden overflow-x-auto md:block'><table className='data-table min-w-[900px]'><caption className='sr-only'>{t('inventory.tableCaption')}</caption><thead><tr><th scope='col'>{t('inventory.partColumn')}</th><th scope='col'>{t('inventory.modelColumn')}</th><th scope='col'>{t('common.status')}</th><th scope='col' className='text-right'>{t('inventory.physicalStock')}</th><th scope='col' className='text-right'>{t('inventory.availableStock')}</th><th scope='col' className='text-right'>{t('inventory.minMax')}</th><th scope='col' className='text-right'>{t('inventory.refill')}</th>{isAdmin && <th scope='col' className='text-right'>{t('common.actions')}</th>}</tr></thead><tbody>{pagedItems.map((item) => <tr key={item.id}><td><p className='font-semibold text-[var(--text)]'>{item.partNumber}</p><p className='mt-1 max-w-[320px] truncate text-xs text-[var(--text-muted)]' title={item.description}>{item.description}</p><p className='mt-1 text-[11px] text-[var(--text-subtle)]'>{item.location}</p></td><td><p className='text-sm text-[var(--text)]'>{item.model || <span className='text-[var(--text-subtle)]'>?</span>}</p></td><td><StatusBadge status={item.status === 'READY' ? 'ready' : 'danger'}>{item.status === 'READY' ? t('common.ready') : t('common.notReady')}</StatusBadge></td><td className='text-right'><p className='font-semibold text-[var(--text)]'>{formatNumber(item.physicalStock)}</p><p className='mt-1 text-[10px] text-[var(--text-subtle)]'>{t('inventory.actual')}</p></td><td className='text-right'><p className='font-semibold text-[var(--text)]'>{formatNumber(item.availableStock)}</p><p className='mt-1 text-[10px] text-[var(--text-subtle)]'>{t('inventory.afterRequest')}</p></td><td className='text-right text-[var(--text-muted)]'>{formatNumber(item.minStock)} / {formatNumber(item.maxStock)}</td><td className='text-right'>{item.refillRecommendation > 0 ? <span className='font-semibold text-[var(--brand-blue)]'>+{formatNumber(item.refillRecommendation)}</span> : <span className='text-[var(--text-subtle)]'>?</span>}</td>{isAdmin && <td className='text-right'><div className='inline-flex gap-1'><Button variant='secondary' size='sm' onClick={() => openEdit(item)} ariaLabel={`${t('common.edit')} ${item.partNumber}`}><Pencil size={14} aria-hidden='true' /></Button><Button variant='danger' size='sm' onClick={() => setConfirmDelete(item)} ariaLabel={`${t('common.delete')} ${item.partNumber}`}><Trash2 size={14} aria-hidden='true' /></Button></div></td>}</tr>)}{filtered.length === 0 && <tr><td colSpan={isAdmin ? 8 : 7} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inventory.noMatch')}</td></tr>}</tbody></table></div>
+        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </section>
 
       {/* Adjustment Modal */}

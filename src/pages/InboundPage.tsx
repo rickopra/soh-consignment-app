@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pagination } from '../components/Pagination'
 import { ArrowDownToLine, CheckCircle2, MessageSquareText, Pencil, Plus, Search } from 'lucide-react'
 import { useToast } from '../components/toast'
@@ -65,7 +65,9 @@ export default function InboundPage() {
   const modelFilterOptions = [{ value: 'ALL', label: t('common.allModels') }, ...modelValues.map((model) => ({ value: model, label: model }))]
   const effectiveModelFilter = modelFilter === 'ALL' || modelValues.includes(modelFilter) ? modelFilter : 'ALL'
   const currentPart = partByNumber.get(draft.partNumber)
-  const [page, setPage] = useState(1); const itemsPerPage = 20; const filtered = useMemo(() => {
+  const [page, setPage] = useState(1)
+  const itemsPerPage = 20
+  const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
     return inbound.filter((item) => {
       const part = partByNumber.get(item.partNumber)
@@ -74,10 +76,17 @@ export default function InboundPage() {
       return matchesSearch && matchesModel
     })
   }, [effectiveModelFilter, inbound, partByNumber, search])
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const pagedItems = useMemo(() => filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage), [filtered, page])
   const totalDocument = inbound.reduce((total, item) => total + item.qtyMatdoc, 0)
   const totalActual = inbound.reduce((total, item) => total + item.qtyActual, 0)
   const pendingGr = inbound.filter((item) => item.grStatus !== 'Done GR').length
   const isId = language === 'id'
+
+  useEffect(() => setPage(1), [effectiveModelFilter, search])
+  useEffect(() => {
+    if (page > Math.max(1, totalPages)) setPage(Math.max(1, totalPages))
+  }, [page, totalPages])
 
   const renderDifference = (qtyMatdoc: number, qtyActual: number) => {
     const difference = qtyActual - qtyMatdoc
@@ -152,12 +161,12 @@ export default function InboundPage() {
             <Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' />
             <input id='inbound-search' type='search' placeholder={t('inbound.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} className='min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' />
           </div>
-          <SelectField id='inbound-model-filter' label={t('inbound.modelFilter')} value={effectiveModelFilter} onChange={setModelFilter} options={modelFilterOptions} variant='surface' />
+          <SelectField id='inbound-model-filter' label={t('common.modelFilter')} value={effectiveModelFilter} onChange={setModelFilter} options={modelFilterOptions} variant='surface' />
         </div>
 
         {/* Mobile cards */}
         <ul className='divide-y divide-[var(--border)] md:hidden'>
-          {filtered.map((item) => (
+          {pagedItems.map((item) => (
             <li key={item.id} className='p-4'>
               <div className='flex items-start justify-between gap-2'>
                 <div className='min-w-0'>
@@ -202,7 +211,7 @@ export default function InboundPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((item) => {
+              {pagedItems.map((item) => {
                 const part = partByNumber.get(item.partNumber)
                 return (
                   <tr key={item.id}>
@@ -226,7 +235,7 @@ export default function InboundPage() {
             </tbody>
           </table>
         </div>
-        <Pagination currentPage={page} totalPages={Math.ceil(filtered.length / itemsPerPage)} onPageChange={setPage} />
+        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </section>
 
       {/* New Inbound Drawer */}

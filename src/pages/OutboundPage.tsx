@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Pagination } from '../components/Pagination'
 import { ArrowUpFromLine, MessageSquareText, Pencil, Plus, Search } from 'lucide-react'
 import { useLanguage } from '../i18n/useLanguage'
@@ -55,7 +55,7 @@ function NotesPreview({ notes, emptyLabel, full = false }: { notes: string; empt
 export default function OutboundPage() {
   const { language, t, formatDate, formatNumber } = useLanguage()
   const { parts, outbound, addOutbound, updateOutbound } = useAppStore()
-  const activeParts = parts.filter((part) => part.active)
+  const activeParts = useMemo(() => parts.filter((part) => part.active), [parts])
   const { push } = useToast()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -69,15 +69,41 @@ export default function OutboundPage() {
   const [editSaving, setEditSaving] = useState(false)
 
   const isId = language === 'id'
-  const currentPart = parts.find((part) => part.partNumber === draft.partNumber)
+  const partByNumber = useMemo(() => new Map(parts.map((part) => [part.partNumber, part])), [parts])
+  const modelValues = useMemo(
+    () => Array.from(new Set(activeParts.map((part) => part.model.trim()).filter(Boolean))).sort((left, right) => left.localeCompare(right)),
+    [activeParts],
+  )
+  const modelFilterOptions = useMemo(
+    () => [{ value: 'ALL', label: t('common.allModels') }, ...modelValues.map((model) => ({ value: model, label: model }))],
+    [modelValues, t],
+  )
+  const [modelFilter, setModelFilter] = useState('ALL')
+  const effectiveModelFilter = modelFilter === 'ALL' || modelValues.includes(modelFilter) ? modelFilter : 'ALL'
+  const currentPart = partByNumber.get(draft.partNumber)
   const needsDocuments = draft.warehouseType !== 'Warehouse Store'
   const [page, setPage] = useState(1)
   const itemsPerPage = 20
-  const filtered = outbound.filter((item) => `${item.partNumber} ${item.requester} ${Object.values(item.documents).join(' ')} ${item.notes}`.toLowerCase().includes(search.toLowerCase()))
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return outbound.filter((item) => {
+      const part = partByNumber.get(item.partNumber)
+      const matchesSearch = `${item.partNumber} ${part?.model ?? ''} ${part?.description ?? ''} ${item.requester} ${Object.values(item.documents).join(' ')} ${item.notes}`.toLowerCase().includes(query)
+      const matchesModel = effectiveModelFilter === 'ALL' || part?.model === effectiveModelFilter
+      return matchesSearch && matchesModel
+    })
+  }, [effectiveModelFilter, outbound, partByNumber, search])
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const pagedItems = useMemo(() => filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage), [filtered, page])
   const totalRequested = outbound.reduce((total, item) => total + item.qtyRequest, 0)
   const totalSupplied = outbound.reduce((total, item) => total + item.qtySupply, 0)
   const totalOutstanding = outbound.reduce((total, item) => total + Math.max(0, item.qtyRequest - item.qtySupply), 0)
   const editOutstanding = editDraft ? Math.max(0, editDraft.qtyRequest - editDraft.qtySupply) : 0
+
+  useEffect(() => setPage(1), [effectiveModelFilter, search])
+  useEffect(() => {
+    if (page > Math.max(1, totalPages)) setPage(Math.max(1, totalPages))
+  }, [page, totalPages])
 
   const updateDocument = (key: keyof OutboundDocuments, value: string) => setDraft((current) => ({ ...current, documents: { ...current.documents, [key]: value } }))
   const updateEditDocument = (key: keyof OutboundDocuments, value: string) => setEditDraft((current) => ({ ...current, documents: { ...current.documents, [key]: value } }))
@@ -123,11 +149,18 @@ export default function OutboundPage() {
       </section>
 
       <section className='app-panel overflow-hidden'>
-        <div className='border-b border-[var(--border)] p-4 sm:p-5'><div className='relative max-w-xl'><label htmlFor='outbound-search' className='sr-only'>{t('outbound.searchLabel')}</label><Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' /><input id='outbound-search' type='search' placeholder={t('outbound.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} className='min-h-11 w-full rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' /></div></div>
+        <div className='grid gap-4 border-b border-[var(--border)] p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end'>
+          <div className='relative'>
+            <label htmlFor='outbound-search' className='sr-only'>{t('outbound.searchLabel')}</label>
+            <Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' />
+            <input id='outbound-search' type='search' placeholder={t('outbound.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} className='min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' />
+          </div>
+          <SelectField id='outbound-model-filter' label={t('common.modelFilter')} value={effectiveModelFilter} onChange={setModelFilter} options={modelFilterOptions} variant='surface' />
+        </div>
 
         {/* Mobile cards */}
         <ul className='divide-y divide-[var(--border)] md:hidden'>
-          {filtered.map((item) => {
+          {pagedItems.map((item) => {
             const outstanding = Math.max(0, item.qtyRequest - item.qtySupply)
             return (
               <li key={item.id} className='p-4'>
@@ -161,7 +194,7 @@ export default function OutboundPage() {
         <div className='hidden overflow-x-auto md:block'>
           <table className='data-table min-w-[1260px]'><caption className='sr-only'>{t('outbound.tableCaption')}</caption>
             <thead><tr><th scope='col'>{t('outbound.dateRequester')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col'>{t('outbound.warehouseType')}</th><th scope='col' className='text-right'>{t('outbound.requestQty')}</th><th scope='col' className='text-right'>{t('outbound.supplyQty')}</th><th scope='col' className='text-right'>{t('outbound.outstanding')}</th><th scope='col'>{t('outbound.documents')}</th><th scope='col'>{t('outbound.notes')}</th><th scope='col' className='text-right'>{t('outbound.action')}</th></tr></thead>
-            <tbody>{filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((item) => {
+            <tbody>{pagedItems.map((item) => {
               const outstanding = Math.max(0, item.qtyRequest - item.qtySupply)
               return (
                 <tr key={item.id}>
@@ -172,13 +205,14 @@ export default function OutboundPage() {
                   <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtySupply)}</td>
                   <td className='text-right'>{outstanding > 0 ? <StatusBadge status='warning'>{formatNumber(outstanding)}</StatusBadge> : <StatusBadge status='ready'>0</StatusBadge>}</td>
                   <td className='min-w-[260px]'><DocumentReferenceList documents={item.documents} emptyLabel={t('outbound.noDocuments')} /></td>
+                  <td className='min-w-[220px]'><NotesPreview notes={item.notes} emptyLabel={t('outbound.noNotes')} /></td>
                   <td className='text-right'><Button variant='secondary' size='sm' onClick={() => openEdit(item)} ariaLabel={`${t('common.edit')} ${item.partNumber}`}><Pencil size={13} aria-hidden='true' />{t('common.edit')}</Button></td>
                 </tr>
               )
             })}{filtered.length === 0 && <tr><td colSpan={9} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('outbound.noData')}</td></tr>}</tbody>
           </table>
         </div>
-        <Pagination currentPage={page} totalPages={Math.ceil(filtered.length / itemsPerPage)} onPageChange={setPage} />
+        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </section>
 
       {/* New Outbound Drawer */}
