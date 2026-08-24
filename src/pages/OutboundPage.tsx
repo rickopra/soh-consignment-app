@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Pagination } from '../components/Pagination'
 import { ArrowUpFromLine, MessageSquareText, Pencil, Plus, Search } from 'lucide-react'
 import { useLanguage } from '../i18n/useLanguage'
 import { localizedError } from '../lib/localizedError'
@@ -70,6 +71,8 @@ export default function OutboundPage() {
   const isId = language === 'id'
   const currentPart = parts.find((part) => part.partNumber === draft.partNumber)
   const needsDocuments = draft.warehouseType !== 'Warehouse Store'
+  const [page, setPage] = useState(1)
+  const itemsPerPage = 20
   const filtered = outbound.filter((item) => `${item.partNumber} ${item.requester} ${Object.values(item.documents).join(' ')} ${item.notes}`.toLowerCase().includes(search.toLowerCase()))
   const totalRequested = outbound.reduce((total, item) => total + item.qtyRequest, 0)
   const totalSupplied = outbound.reduce((total, item) => total + item.qtySupply, 0)
@@ -158,7 +161,7 @@ export default function OutboundPage() {
         <div className='hidden overflow-x-auto md:block'>
           <table className='data-table min-w-[1260px]'><caption className='sr-only'>{t('outbound.tableCaption')}</caption>
             <thead><tr><th scope='col'>{t('outbound.dateRequester')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col'>{t('outbound.warehouseType')}</th><th scope='col' className='text-right'>{t('outbound.requestQty')}</th><th scope='col' className='text-right'>{t('outbound.supplyQty')}</th><th scope='col' className='text-right'>{t('outbound.outstanding')}</th><th scope='col'>{t('outbound.documents')}</th><th scope='col'>{t('outbound.notes')}</th><th scope='col' className='text-right'>{t('outbound.action')}</th></tr></thead>
-            <tbody>{filtered.map((item) => {
+            <tbody>{filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((item) => {
               const outstanding = Math.max(0, item.qtyRequest - item.qtySupply)
               return (
                 <tr key={item.id}>
@@ -175,6 +178,7 @@ export default function OutboundPage() {
             })}{filtered.length === 0 && <tr><td colSpan={9} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('outbound.noData')}</td></tr>}</tbody>
           </table>
         </div>
+        <Pagination currentPage={page} totalPages={Math.ceil(filtered.length / itemsPerPage)} onPageChange={setPage} />
       </section>
 
       {/* New Outbound Drawer */}

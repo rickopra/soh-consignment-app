@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Pagination } from '../components/Pagination'
 import { ArrowDownToLine, CheckCircle2, MessageSquareText, Pencil, Plus, Search } from 'lucide-react'
 import { useToast } from '../components/toast'
 import { Button, Drawer, FormDivider, FormError, FormRow, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextAreaField, TextField } from '../components/ui'
@@ -64,7 +65,7 @@ export default function InboundPage() {
   const modelFilterOptions = [{ value: 'ALL', label: t('common.allModels') }, ...modelValues.map((model) => ({ value: model, label: model }))]
   const effectiveModelFilter = modelFilter === 'ALL' || modelValues.includes(modelFilter) ? modelFilter : 'ALL'
   const currentPart = partByNumber.get(draft.partNumber)
-  const filtered = useMemo(() => {
+  const [page, setPage] = useState(1); const itemsPerPage = 20; const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
     return inbound.filter((item) => {
       const part = partByNumber.get(item.partNumber)
@@ -201,7 +202,7 @@ export default function InboundPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => {
+              {filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage).map((item) => {
                 const part = partByNumber.get(item.partNumber)
                 return (
                   <tr key={item.id}>
@@ -225,6 +226,7 @@ export default function InboundPage() {
             </tbody>
           </table>
         </div>
+        <Pagination currentPage={page} totalPages={Math.ceil(filtered.length / itemsPerPage)} onPageChange={setPage} />
       </section>
 
       {/* New Inbound Drawer */}
