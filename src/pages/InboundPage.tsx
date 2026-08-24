@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ArrowDownToLine, CheckCircle2, MessageSquareText, Pencil, Plus, Search } from 'lucide-react'
 import { useToast } from '../components/toast'
 import { Button, Drawer, FormDivider, FormError, FormRow, Modal, NumberField, SectionHeader, SelectField, StatusBadge, TextAreaField, TextField } from '../components/ui'
@@ -45,10 +45,11 @@ function NotesPreview({ notes, emptyLabel, full = false }: { notes: string; empt
 export default function InboundPage() {
   const { language, t, formatDate, formatNumber } = useLanguage()
   const { parts, inbound, addInbound, updateInbound } = useAppStore()
-  const activeParts = parts.filter((part) => part.active)
+  const activeParts = useMemo(() => parts.filter((part) => part.active), [parts])
   const { push } = useToast()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [modelFilter, setModelFilter] = useState('ALL')
   const [draft, setDraft] = useState(defaultInboundDraft)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -58,12 +59,40 @@ export default function InboundPage() {
   const [grError, setGrError] = useState('')
   const [grSaving, setGrSaving] = useState(false)
 
-  const currentPart = parts.find((part) => part.partNumber === draft.partNumber)
-  const filtered = inbound.filter((item) => `${item.partNumber} ${item.matdocNumber} ${item.spbNumber} ${item.poNumber}`.toLowerCase().includes(search.toLowerCase()))
+  const partByNumber = useMemo(() => new Map(parts.map((part) => [part.partNumber, part])), [parts])
+  const modelValues = useMemo(() => Array.from(new Set(activeParts.map((part) => part.model.trim()).filter(Boolean))).sort((left, right) => left.localeCompare(right)), [activeParts])
+  const modelFilterOptions = [{ value: 'ALL', label: t('common.allModels') }, ...modelValues.map((model) => ({ value: model, label: model }))]
+  const effectiveModelFilter = modelFilter === 'ALL' || modelValues.includes(modelFilter) ? modelFilter : 'ALL'
+  const currentPart = partByNumber.get(draft.partNumber)
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return inbound.filter((item) => {
+      const part = partByNumber.get(item.partNumber)
+      const matchesSearch = `${item.partNumber} ${part?.model ?? ''} ${part?.description ?? ''} ${item.matdocNumber} ${item.spbNumber} ${item.poNumber} ${item.invoiceOrTo} ${item.source} ${item.notes}`.toLowerCase().includes(query)
+      const matchesModel = effectiveModelFilter === 'ALL' || part?.model === effectiveModelFilter
+      return matchesSearch && matchesModel
+    })
+  }, [effectiveModelFilter, inbound, partByNumber, search])
   const totalDocument = inbound.reduce((total, item) => total + item.qtyMatdoc, 0)
   const totalActual = inbound.reduce((total, item) => total + item.qtyActual, 0)
   const pendingGr = inbound.filter((item) => item.grStatus !== 'Done GR').length
   const isId = language === 'id'
+
+  const renderDifference = (qtyMatdoc: number, qtyActual: number) => {
+    const difference = qtyActual - qtyMatdoc
+    const differenceLabel = difference === 0
+      ? t('inbound.differenceMatched')
+      : difference < 0
+        ? t('inbound.differenceShortage', { count: formatNumber(Math.abs(difference)) })
+        : t('inbound.differenceExcess', { count: formatNumber(difference) })
+    return (
+      <span title={differenceLabel} aria-label={differenceLabel}>
+        <StatusBadge status={difference === 0 ? 'ready' : difference < 0 ? 'danger' : 'warning'}>
+          {difference > 0 ? '+' : ''}{formatNumber(difference)}
+        </StatusBadge>
+      </span>
+    )
+  }
 
   const closeModal = () => { setOpen(false); setError('') }
   const openModal = () => { setDraft({ ...defaultInboundDraft, partNumber: activeParts[0]?.partNumber ?? '' }); setError(''); setOpen(true) }
@@ -94,7 +123,7 @@ export default function InboundPage() {
     setGrError('')
     try {
       await updateInbound(grEdit.id, { grStatus: grDraft.grStatus, qtyActual: grDraft.qtyActual, qtyMatdoc: grDraft.qtyMatdoc, matdocNumber: grDraft.matdocNumber })
-      push({ tone: 'success', title: t('inbound.grUpdated'), description: `${grEdit.partNumber} â€” ${grDraft.grStatus === 'Done GR' ? t('common.doneGr') : t('common.pending')}` })
+      push({ tone: 'success', title: t('inbound.grUpdated'), description: `${grEdit.partNumber} ? ${grDraft.grStatus === 'Done GR' ? t('common.doneGr') : t('common.pending')}` })
       setGrEdit(null)
     } catch (grErr) {
       setGrError(localizedError(grErr, language, t, 'inbound.saveFailed'))
@@ -116,7 +145,14 @@ export default function InboundPage() {
       </section>
 
       <section className='app-panel overflow-hidden'>
-        <div className='border-b border-[var(--border)] p-4 sm:p-5'><div className='relative max-w-xl'><label htmlFor='inbound-search' className='sr-only'>{t('inbound.searchLabel')}</label><Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' /><input id='inbound-search' type='search' placeholder={t('inbound.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} className='min-h-11 w-full rounded-[6px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' /></div></div>
+        <div className='grid gap-4 border-b border-[var(--border)] p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_240px] lg:items-end'>
+          <div className='relative'>
+            <label htmlFor='inbound-search' className='sr-only'>{t('inbound.searchLabel')}</label>
+            <Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' />
+            <input id='inbound-search' type='search' placeholder={t('inbound.searchPlaceholder')} value={search} onChange={(event) => setSearch(event.target.value)} className='min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' />
+          </div>
+          <SelectField id='inbound-model-filter' label={t('inbound.modelFilter')} value={effectiveModelFilter} onChange={setModelFilter} options={modelFilterOptions} variant='surface' />
+        </div>
 
         {/* Mobile cards */}
         <ul className='divide-y divide-[var(--border)] md:hidden'>
@@ -129,9 +165,10 @@ export default function InboundPage() {
                 </div>
                 {item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1' />{t('common.doneGr')}</StatusBadge> : <Button variant='secondary' size='sm' onClick={() => openGrEdit(item)}>{isId ? 'Konfirmasi GR' : 'Confirm GR'}</Button>}
               </div>
-              <div className='mt-3 grid grid-cols-2 divide-x divide-[var(--border)] rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] text-center'>
-                <div className='py-2 px-1'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{t('inbound.documentQty')}</p><p className='mt-1 font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</p></div>
-                <div className='py-2 px-1'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{t('inbound.actualQty')}</p><p className='mt-1 font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</p></div>
+              <div className='mt-3 grid grid-cols-3 divide-x divide-[var(--border)] rounded-[8px] border border-[var(--border)] bg-[var(--surface-muted)] text-center'>
+                <div className='px-1 py-2'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{t('inbound.documentQty')}</p><p className='mt-1 font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</p></div>
+                <div className='px-1 py-2'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{t('inbound.actualQty')}</p><p className='mt-1 font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</p></div>
+                <div className='flex flex-col items-center px-1 py-2'><p className='text-[9px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]'>{t('inbound.differenceLabel')}</p><div className='mt-1'>{renderDifference(item.qtyMatdoc, item.qtyActual)}</div></div>
               </div>
               <div className='mt-3 border-t border-[var(--border)] pt-3'>
                 <p className='mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-subtle)]'>{t('inbound.references')}</p>
@@ -148,22 +185,44 @@ export default function InboundPage() {
 
         {/* Desktop table */}
         <div className='hidden overflow-x-auto md:block'>
-          <table className='data-table min-w-[1260px]'><caption className='sr-only'>{t('inbound.tableCaption')}</caption>
-            <thead><tr><th scope='col'>{t('inbound.receivedDate')}</th><th scope='col'>{t('common.partNumber')}</th><th scope='col' className='text-right'>{t('inbound.documentQty')}</th><th scope='col' className='text-right'>{t('inbound.actualQty')}</th><th scope='col' className='text-right'>{t('inbound.difference', {count: ''}).replace(' unit', '').trim() || (isId ? 'Selisih' : 'Diff')}</th><th scope='col'>{t('inbound.references')}</th><th scope='col'>{t('inbound.notes')}</th><th scope='col'>{t('inbound.grStatus')}</th><th scope='col' className='text-right'>{t('common.actions')}</th></tr></thead>
-            <tbody>{filtered.map((item) => {
-              const refs = [item.matdocNumber ? `Matdoc: ${item.matdocNumber}` : null, item.poNumber ? `PO: ${item.poNumber}` : null, item.spbNumber ? `SPB: ${item.spbNumber}` : null].filter(Boolean).join(' Â· ')
-              return (
-                <tr key={item.id}>
-                  <td className='whitespace-nowrap'><p className='font-semibold text-[var(--text)]'>{formatDate(item.receivedDate)}</p></td>
-                  <td><p className='font-semibold text-[var(--text)]'>{item.partNumber}</p><p className='mt-1 max-w-[260px] truncate text-xs text-[var(--text-muted)]'>{parts.find((part) => part.partNumber === item.partNumber)?.description ?? t('common.notAvailable')}</p></td>
-                  <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</td>
-                  <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</td>
-                  <td><p className='max-w-[240px] text-xs leading-5 text-[var(--text-muted)]'>{refs || 'â€”'}</p></td>
-                  <td><NotesPreview notes={item.notes} emptyLabel={t('inbound.noNotes')} /></td><td>{item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1.5' />{t('common.doneGr')}</StatusBadge> : <StatusBadge status='warning'>{t('common.pending')}</StatusBadge>}</td>
-                  <td className='text-right'><Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('common.edit')} GR ${item.partNumber}`}><Pencil size={13} aria-hidden='true' />{t('common.edit')}</Button></td>
-                </tr>
-              )
-            })}{filtered.length === 0 && <tr><td colSpan={9} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</td></tr>}</tbody>
+          <table className='data-table min-w-[1380px]'>
+            <caption className='sr-only'>{t('inbound.tableCaption')}</caption>
+            <thead>
+              <tr>
+                <th scope='col'>{t('inbound.receivedDate')}</th>
+                <th scope='col'>{t('common.partNumber')}</th>
+                <th scope='col' className='text-right'>{t('inbound.documentQty')}</th>
+                <th scope='col' className='text-right'>{t('inbound.actualQty')}</th>
+                <th scope='col' className='text-right'>{t('inbound.differenceLabel')}</th>
+                <th scope='col'>{t('inbound.references')}</th>
+                <th scope='col'>{t('inbound.notes')}</th>
+                <th scope='col'>{t('inbound.grStatus')}</th>
+                <th scope='col' className='text-right'>{t('common.actions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((item) => {
+                const part = partByNumber.get(item.partNumber)
+                return (
+                  <tr key={item.id}>
+                    <td className='whitespace-nowrap'><p className='font-semibold text-[var(--text)]'>{formatDate(item.receivedDate)}</p></td>
+                    <td>
+                      <p className='font-semibold text-[var(--text)]'>{item.partNumber}</p>
+                      <p className='mt-1 max-w-[260px] truncate text-xs text-[var(--text-muted)]'>{part?.description ?? t('common.notAvailable')}</p>
+                      {part?.model && <p className='mt-1 text-[11px] font-medium text-[var(--brand-blue)]'>{t('inventory.model')}: {part.model}</p>}
+                    </td>
+                    <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyMatdoc)}</td>
+                    <td className='text-right font-semibold text-[var(--text)]'>{formatNumber(item.qtyActual)}</td>
+                    <td className='text-right'>{renderDifference(item.qtyMatdoc, item.qtyActual)}</td>
+                    <td className='min-w-[280px]'><InboundReferenceList matdocNumber={item.matdocNumber} poNumber={item.poNumber} spbNumber={item.spbNumber} invoiceOrTo={item.invoiceOrTo} source={item.source} emptyLabel={t('inbound.noReferences')} /></td>
+                    <td><NotesPreview notes={item.notes} emptyLabel={t('inbound.noNotes')} /></td>
+                    <td>{item.grStatus === 'Done GR' ? <StatusBadge status='ready'><CheckCircle2 size={12} className='mr-1.5' />{t('common.doneGr')}</StatusBadge> : <StatusBadge status='warning'>{t('common.pending')}</StatusBadge>}</td>
+                    <td className='text-right'><Button variant='secondary' size='sm' onClick={() => openGrEdit(item)} ariaLabel={`${t('common.edit')} GR ${item.partNumber}`}><Pencil size={13} aria-hidden='true' />{t('common.edit')}</Button></td>
+                  </tr>
+                )
+              })}
+              {filtered.length === 0 && <tr><td colSpan={9} className='py-16 text-center text-sm text-[var(--text-muted)]'>{t('inbound.noData')}</td></tr>}
+            </tbody>
           </table>
         </div>
       </section>
