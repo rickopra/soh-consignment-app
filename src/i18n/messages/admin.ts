@@ -13,7 +13,7 @@ export const adminMessages = {
     'admin.auditTab': 'Catatan audit',
     'admin.loading': 'Memuat data akses...',
     'admin.loadFailed': 'Data administrasi gagal dimuat.',
-    'admin.actionFailed': 'Tindakan administrator gagal.',
+    'admin.actionFailed': 'Aksi administrator gagal.',
     'admin.createTitle': 'Buat pengguna baru',
     'admin.createDescription': 'Sistem membuat kata sandi sementara yang wajib diganti saat login pertama.',
     'admin.displayName': 'Nama lengkap',

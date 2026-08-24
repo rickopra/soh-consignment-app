@@ -53,7 +53,7 @@ export const outboundMessages = {
     'outbound.totalRequested': 'Total requested',
     'outbound.totalSupplied': 'Total supplied',
     'outbound.outstanding': 'Outstanding',
-    'outbound.action': 'Action',
+    'outbound.action': 'Actions',
     'outbound.updateSupply': 'Update supply',
     'outbound.updateSupplyTitle': 'Update supplied quantity',
     'outbound.updateSupplyDescription': 'Enter the quantity actually handed over. Outstanding will recalculate automatically.',

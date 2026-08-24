@@ -198,7 +198,7 @@ export default function OutboundPage() {
               <th scope='col' className='w-[80px] text-right'>{t('outbound.outstanding')}</th>
               <th scope='col' className='w-[180px]'>{t('outbound.documents')}</th>
               <th scope='col'>{t('outbound.notes')}</th>
-              <th scope='col' className='w-[64px] text-right'>{t('outbound.action')}</th>
+              <th scope='col' className='w-[64px] text-right'>{t('common.actions')}</th>
             </tr></thead>
             <tbody>{pagedItems.map((item) => {
               const outstanding = Math.max(0, item.qtyRequest - item.qtySupply)
