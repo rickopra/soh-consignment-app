@@ -22,7 +22,7 @@ type VoucherEditor = {
   remarks: string
 }
 
-const VOUCHER_STORAGE_KEY = 'soh-parts-voucher-draft-v1'
+const VOUCHER_STORAGE_KEY = 'soh-parts-voucher-draft-v2'
 
 export default function RefillPage() {
   const { language, t, formatNumber } = useLanguage()
