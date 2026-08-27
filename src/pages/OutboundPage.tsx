@@ -46,7 +46,7 @@ function NotesPreview({ notes, emptyLabel, full = false }: { notes: string; empt
   if (!value) return <span className='text-xs text-[var(--text-subtle)]'>{emptyLabel}</span>
   return (
     <div className='flex min-w-0 items-start gap-2 text-[var(--text-muted)]'>
-      <MessageSquareText size={14} className='mt-0.5 shrink-0 text-[var(--brand-orange)]' aria-hidden='true' />
+      <MessageSquareText size={14} className='mt-0.5 shrink-0 text-[var(--brand-accent)]' aria-hidden='true' />
       <p title={value} className={full ? 'whitespace-pre-wrap break-words text-xs leading-5 text-[var(--text-muted)]' : 'max-w-[240px] truncate text-xs leading-5 text-[var(--text-muted)]'}>{value}</p>
     </div>
   )
@@ -149,7 +149,7 @@ export default function OutboundPage() {
           <div className='relative'>
             <label htmlFor='outbound-search' className='sr-only'>{t('outbound.searchLabel')}</label>
             <Search size={17} className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]' aria-hidden='true' />
-            <input id='outbound-search' type='search' placeholder={t('outbound.searchPlaceholder')} value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} className='min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10' />
+            <input id='outbound-search' type='search' placeholder={t('outbound.searchPlaceholder')} value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} className='min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] pl-10 pr-3 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-accent)] focus:ring-4 focus:ring-[var(--brand-accent)]/10' />
           </div>
           <SelectField id='outbound-model-filter' label={t('common.modelFilter')} value={effectiveModelFilter} onChange={(value) => { setModelFilter(value); setPage(1) }} options={modelFilterOptions} variant='surface' />
         </div>

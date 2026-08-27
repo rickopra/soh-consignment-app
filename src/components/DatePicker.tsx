@@ -16,10 +16,10 @@ type DatePickerProps = {
   error?: string
 }
 
-const fieldBase = 'min-h-10 w-full border-0 border-b-2 border-[var(--border-strong)] bg-transparent px-0 pb-1.5 pt-0 text-sm text-[var(--text)] outline-none transition-[border-color] placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] disabled:cursor-not-allowed disabled:opacity-60'
+const fieldBase = 'min-h-10 w-full border-0 border-b border-[var(--border-strong)] bg-transparent px-0 pb-1.5 pt-0 text-sm text-[var(--text)] outline-none transition-[border-color] placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-accent)] disabled:cursor-not-allowed disabled:opacity-60'
 
 function FieldLabel({ htmlFor, children, required, hint }: { htmlFor: string; children: ReactNode; required?: boolean; hint?: string }) {
-  return <label htmlFor={htmlFor} className='mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-[var(--text-subtle)]'>{children}{required && <span className='ml-1 text-[var(--brand-orange)]' aria-hidden='true'>*</span>}{hint && <span className='ml-2 font-normal normal-case text-[var(--text-subtle)]'>{hint}</span>}</label>
+  return <label htmlFor={htmlFor} className='mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-[var(--text-subtle)]'>{children}{required && <span className='ml-1 text-[var(--brand-accent)]' aria-hidden='true'>*</span>}{hint && <span className='ml-2 font-normal normal-case text-[var(--text-subtle)]'>{hint}</span>}</label>
 }
 
 function parseDateValue(value: string) {
@@ -135,7 +135,7 @@ export function DatePicker({ id, label, value, onChange, required, hint, disable
         aria-required={required}
         aria-invalid={Boolean(error)}
         onClick={() => setOpen((current) => !current)}
-        className={cn(fieldBase, 'flex items-center justify-between text-left', open && 'border-[var(--brand-orange)]', error && 'border-[var(--danger)]')}
+        className={cn(fieldBase, 'flex items-center justify-between text-left', open && 'border-[var(--brand-accent)]', error && 'border-[var(--danger)]')}
       >
         <span className={formattedValue ? 'text-[var(--text)]' : 'text-[var(--text-subtle)]'}>{formattedValue || text.select}</span>
         <CalendarDays size={16} className='shrink-0 text-[var(--text-muted)]' aria-hidden='true' />
@@ -173,8 +173,8 @@ export function DatePicker({ id, label, value, onChange, required, hint, disable
                 onKeyDown={(event) => handleDayKeyDown(event, index)}
                 className={cn(
                   'flex h-9 w-full items-center justify-center rounded-[7px] text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)]',
-                  selected ? 'bg-[var(--brand-orange)] font-semibold text-white hover:bg-[var(--brand-orange)]' : outsideMonth ? 'text-[var(--text-subtle)] hover:bg-[var(--surface-muted)]' : 'text-[var(--text)] hover:bg-[var(--surface-muted)]',
-                  isToday(day) && !selected && 'border border-[var(--brand-orange)] font-semibold text-[var(--brand-orange)]',
+                  selected ? 'bg-[var(--brand-accent)] font-semibold text-white hover:bg-[var(--brand-accent)]' : outsideMonth ? 'text-[var(--text-subtle)] hover:bg-[var(--surface-muted)]' : 'text-[var(--text)] hover:bg-[var(--surface-muted)]',
+                  isToday(day) && !selected && 'border border-[var(--brand-accent)] font-semibold text-[var(--brand-accent)]',
                 )}
               >{day.getDate()}</button>
             })}

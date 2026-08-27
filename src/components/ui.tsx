@@ -6,11 +6,11 @@ import { cn } from '../lib/utils'
 import { DatePicker } from './DatePicker'
 
 const variants = {
-  primary: 'border border-[var(--brand-blue-strong)] bg-[var(--brand-blue)] text-white hover:bg-[var(--brand-blue-strong)]',
+  primary: 'border border-[var(--brand-accent)] bg-[var(--brand-accent)] text-white hover:bg-[var(--brand-accent-bright)] hover:border-[var(--brand-accent-bright)]',
   secondary: 'border border-[var(--border-strong)] bg-[var(--surface-raised)] text-[var(--text)] hover:bg-[var(--surface-muted)]',
   ghost: 'border border-transparent text-[var(--text-muted)] hover:border-[var(--border)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]',
-  danger: 'border border-[#8f2f3a] bg-[#a33945] text-white hover:bg-[#8f2f3a]',
-  subtle: 'border border-[#9ab9cc] bg-[#e8f0f5] text-[#164c70] hover:bg-[#dce9f1] dark:border-[#365d74] dark:bg-[#143247] dark:text-[#b9d9eb]',
+  danger: 'border border-[#8f2f3a] bg-[var(--danger)] text-white hover:bg-[#8f2f3a]',
+  subtle: 'border border-[var(--border-strong)] bg-[var(--surface-muted)] text-[var(--brand-accent)] hover:bg-[var(--surface-strong)]',
 } as const
 
 export function Button({ children, className, variant = 'primary', size = 'md', type = 'button', disabled, onClick, ariaLabel }: { children: ReactNode; className?: string; variant?: keyof typeof variants; size?: 'sm' | 'md' | 'lg'; type?: 'button' | 'submit' | 'reset'; disabled?: boolean; onClick?: () => void; ariaLabel?: string }) {
@@ -27,9 +27,9 @@ export function Card({ children, className, as = 'section' }: { children: ReactN
 }
 
 const statusStyles = {
-  ready: 'border-[#9bc8b5] bg-[#e8f3ee] text-[#1f654b] dark:border-[#356a56] dark:bg-[#123629] dark:text-[#8ed0b4]',
-  warning: 'border-[#dfbf8a] bg-[#fbf2df] text-[#80500c] dark:border-[#755829] dark:bg-[#3b2c13] dark:text-[#e9bd74]',
-  danger: 'border-[#dab0b5] bg-[#f8e9eb] text-[#8d303b] dark:border-[#70404a] dark:bg-[#3a1f26] dark:text-[#efa0a9]',
+  ready: 'border-[#9bc8b5] bg-[#e8f3ee] text-[#1d7a55] dark:border-[#2a6b52] dark:bg-[#122e22] dark:text-[#5dd4a4]',
+  warning: 'border-[#dfbf8a] bg-[#fbf2df] text-[#946a12] dark:border-[#6b5524] dark:bg-[#332810] dark:text-[#d4a748]',
+  danger: 'border-[#dab0b5] bg-[#f8e9eb] text-[#b3404b] dark:border-[#70404a] dark:bg-[#33202a] dark:text-[#ef8e98]',
   neutral: 'border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)]',
 } as const
 
@@ -38,10 +38,10 @@ export function StatusBadge({ status, children }: { status: keyof typeof statusS
 }
 
 export function FieldLabel({ htmlFor, children, required, hint }: { htmlFor: string; children: ReactNode; required?: boolean; hint?: string }) {
-  return <label htmlFor={htmlFor} className='mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-[var(--text-subtle)]'>{children}{required && <span className='ml-1 text-[var(--brand-orange)]' aria-hidden='true'>*</span>}{hint && <span className='ml-2 font-normal normal-case text-[var(--text-subtle)]'>{hint}</span>}</label>
+  return <label htmlFor={htmlFor} className='mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-[var(--text-subtle)]'>{children}{required && <span className='ml-1 text-[var(--brand-accent)]' aria-hidden='true'>*</span>}{hint && <span className='ml-2 font-normal normal-case text-[var(--text-subtle)]'>{hint}</span>}</label>
 }
 
-export const fieldBase = 'min-h-10 w-full border-0 border-b-2 border-[var(--border-strong)] bg-transparent px-0 pb-1.5 pt-0 text-sm text-[var(--text)] outline-none transition-[border-color] placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-orange)] disabled:cursor-not-allowed disabled:opacity-60'
+export const fieldBase = 'min-h-10 w-full border-0 border-b border-[var(--border-strong)] bg-transparent px-0 pb-1.5 pt-0 text-sm text-[var(--text)] outline-none transition-[border-color] placeholder:text-[var(--text-subtle)] focus:border-[var(--brand-accent)] disabled:cursor-not-allowed disabled:opacity-60'
 
 
 
@@ -159,10 +159,10 @@ export function SelectField({ id, label, value, onChange, options, required, hin
         onKeyDown={handleTriggerKeyDown}
         className={cn(
           variant === 'surface'
-            ? 'min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text)] outline-none transition-[border-color,box-shadow,background-color] focus:border-[var(--brand-orange)] focus:ring-4 focus:ring-[var(--brand-orange)]/10'
+            ? 'min-h-11 w-full rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] px-3 text-sm text-[var(--text)] outline-none transition-[border-color,box-shadow,background-color] focus:border-[var(--brand-accent)] focus:ring-4 focus:ring-[var(--brand-accent)]/10'
             : fieldBase,
           'flex items-center justify-between gap-3 text-left',
-          open && 'border-[var(--brand-orange)]',
+          open && 'border-[var(--brand-accent)]',
         )}
       >
         <span className={cn('min-w-0 flex-1 truncate', selectedOption ? 'text-[var(--text)]' : 'text-[var(--text-subtle)]')}>{selectedOption?.label ?? '?'}</span>
@@ -174,7 +174,7 @@ export function SelectField({ id, label, value, onChange, options, required, hin
           id={listboxId}
           role='listbox'
           aria-labelledby={label ? id : undefined}
-          className='fixed z-[80] overflow-y-auto rounded-[10px] border border-[var(--border-strong)] bg-[var(--surface-raised)] p-1.5 shadow-[0_18px_48px_rgba(7,19,29,0.24)]'
+          className='fixed z-[80] overflow-y-auto rounded-[8px] border border-[var(--border-strong)] bg-[var(--surface-raised)] p-1.5 shadow-[0_12px_32px_rgba(16,35,52,0.1),0_4px_8px_rgba(16,35,52,0.04)]'
           style={{ top: position.top, left: position.left, width: position.width, maxHeight: position.maxHeight }}
         >
           {options.map((option, index) => {
@@ -193,7 +193,7 @@ export function SelectField({ id, label, value, onChange, options, required, hin
                 onClick={() => chooseOption(index)}
                 className={cn(
                   'flex min-h-10 w-full items-center rounded-[7px] px-3 text-left text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[var(--focus)]',
-                  selected ? 'bg-[var(--brand-blue)] font-semibold text-white' : active ? 'bg-[var(--surface-muted)] text-[var(--text)]' : 'text-[var(--text)] hover:bg-[var(--surface-muted)]',
+                  selected ? 'bg-[var(--brand-accent)] font-semibold text-white' : active ? 'bg-[var(--surface-muted)] text-[var(--text)]' : 'text-[var(--text)] hover:bg-[var(--surface-muted)]',
                 )}
               >
                 <span className='truncate'>{option.label}</span>
@@ -258,8 +258,8 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
 
   if (!open) return null
   return createPortal(
-    <div className='fixed inset-0 z-50 flex items-end justify-center bg-[#07131d]/65 p-0 sm:items-center sm:p-4' role='presentation' onMouseDown={(event) => { if (event.target === event.currentTarget) onCloseRef.current() }}>
-      <div ref={dialogRef} tabIndex={-1} role='dialog' aria-modal='true' aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} className={cn('max-h-[92vh] w-full overflow-y-auto rounded-t-[14px] border border-[var(--border)] bg-[var(--surface)] shadow-2xl outline-none sm:rounded-[14px]', size === 'sm' && 'max-w-md', size === 'lg' ? 'max-w-4xl' : 'max-w-xl')}>
+      <div className='fixed inset-0 z-50 flex items-end justify-center bg-[#0d1520]/60 p-0 sm:items-center sm:p-4' role='presentation' onMouseDown={(event) => { if (event.target === event.currentTarget) onCloseRef.current() }}>
+      <div ref={dialogRef} tabIndex={-1} role='dialog' aria-modal='true' aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} className={cn('max-h-[92vh] w-full overflow-y-auto rounded-t-[12px] border border-[var(--border)] bg-[var(--surface)] shadow-[0_12px_32px_rgba(16,35,52,0.1),0_4px_8px_rgba(16,35,52,0.04)] outline-none sm:rounded-[12px]', size === 'sm' && 'max-w-md', size === 'lg' ? 'max-w-4xl' : 'max-w-xl')}>
         <div className='sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[var(--border)] bg-[var(--surface)] px-5 py-4 sm:px-6'>
           <div><h2 id={titleId} className='text-lg font-semibold tracking-tight text-[var(--text)]'>{title}</h2>{description && <p id={descriptionId} className='mt-1 text-sm leading-5 text-[var(--text-muted)]'>{description}</p>}</div>
           <IconButton label={t('common.close')} onClick={() => onCloseRef.current()}><X size={18} /></IconButton>
@@ -314,7 +314,7 @@ export function Drawer({ open, onClose, title, description, children, footer, wi
       className={cn('fixed inset-0 z-50 flex justify-end transition-[visibility] duration-200', open ? 'visible' : 'invisible')}
     >
       <div
-        className={cn('absolute inset-0 bg-[#07131d]/60 transition-opacity duration-200', open ? 'opacity-100' : 'opacity-0')}
+        className={cn('absolute inset-0 bg-[#0d1520]/55 transition-opacity duration-200', open ? 'opacity-100' : 'opacity-0')}
         aria-hidden='true'
         onClick={() => onCloseRef.current()}
       />
@@ -325,7 +325,7 @@ export function Drawer({ open, onClose, title, description, children, footer, wi
         aria-modal='true'
         aria-labelledby={titleId}
         className={cn(
-          'relative flex h-full flex-col border-l border-[var(--border)] bg-[var(--surface)] shadow-2xl outline-none will-change-transform transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
+          'relative flex h-full flex-col border-l border-[var(--border)] bg-[var(--surface)] shadow-[0_12px_32px_rgba(16,35,52,0.1),0_4px_8px_rgba(16,35,52,0.04)] outline-none will-change-transform transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
           width === 'sm' ? 'w-full max-w-sm' : width === 'lg' ? 'w-full max-w-2xl' : 'w-full max-w-xl',
           open ? 'translate-x-0' : 'translate-x-full',
         )}
@@ -355,13 +355,13 @@ export function FormError({ message }: { message?: string }) {
   return (
     <div className='flex items-start gap-2.5 rounded-[8px] border border-[#dab0b5] bg-[#f8e9eb] px-3.5 py-3' role='alert'>
       <AlertCircle size={15} className='mt-px shrink-0 text-[var(--danger)]' aria-hidden='true' />
-      <p className='text-sm leading-5 text-[#7f2834]'>{message}</p>
+      <p className='text-sm leading-5 text-[#b3404b]'>{message}</p>
     </div>
   )
 }
 
 export function SectionHeader({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
-  return <div className='mb-6 flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-end'><div>{eyebrow && <p className='mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-orange)]'><span className='h-1.5 w-5 bg-[var(--brand-orange)]' aria-hidden='true' />{eyebrow}</p>}<h1 className='text-[25px] font-semibold tracking-[-0.02em] text-[var(--text)] sm:text-[28px]'>{title}</h1>{description && <p className='mt-2 max-w-3xl text-sm leading-6 text-[var(--text-muted)]'>{description}</p>}</div>{action && <div className='shrink-0'>{action}</div>}</div>
+  return <div className='mb-6 flex flex-col justify-between gap-4 border-b border-[var(--border)] pb-5 sm:flex-row sm:items-end'><div>{eyebrow && <p className='mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--brand-accent)]'><span className='h-1 w-4 bg-[var(--brand-accent)]' aria-hidden='true' />{eyebrow}</p>}<h1 className='text-[24px] font-bold tracking-[-0.02em] text-[var(--text)] sm:text-[26px]'>{title}</h1>{description && <p className='mt-2 max-w-3xl text-sm leading-6 text-[var(--text-muted)]'>{description}</p>}</div>{action && <div className='shrink-0'>{action}</div>}</div>
 }
 
 export function PasswordField({ id, label, value, onChange, required, hint, placeholder, disabled, error, autoComplete = 'current-password' }: { id: string; label: string; value: string; onChange: (value: string) => void; required?: boolean; hint?: string; placeholder?: string; disabled?: boolean; error?: string; autoComplete?: string }) {

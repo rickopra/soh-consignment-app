@@ -27,9 +27,6 @@ export function AuthLayout({ children, contextTitle, contextDescription }: { chi
       <main className='auth-layout'>
         <aside className='auth-hero' aria-labelledby='auth-context-title'>
           <div className='auth-flow' aria-hidden='true'>
-            <span className='auth-flow-line auth-flow-line-one'><i /></span>
-            <span className='auth-flow-line auth-flow-line-two'><i /></span>
-            <span className='auth-flow-line auth-flow-line-three'><i /></span>
             <span className='auth-flow-axis' />
           </div>
 
